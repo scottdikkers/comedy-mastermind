@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Comedy Mastermind</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --red: #e93626;
+    --black: #000000;
+    --white: #ffffff;
+    --off-white: #f5f2ee;
+    --dark-bubble: #1c1c1c;
+    --dark-bubble-border: #2a2a2a;
+    --bg: #0d0d0d;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* ── KEY SCREEN ── */
+  #key-screen {
+    position: fixed;
+    inset: 0;
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    padding: 24px;
+  }
+
+  .key-card {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 40px 32px;
+    max-width: 380px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .key-badge {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 4px;
+  }
+
+  .key-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0ece4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .key-sub {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  .key-input {
+    width: 100%;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: #f0ece4;
+    font-family: monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .key-input:focus { border-color: #e93626; }
+
+  .key-btn {
+    width: 100%;
+    background: #e93626;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s;
+  }
+
+  .key-btn:hover { opacity: 0.9; }
+  .key-error { font-size: 13px; color: #e93626; }
+  .key-note { font-size: 11px; color: #333; line-height: 1.6; }
+  #splash {
+    position: fixed;
+    inset: 0;
+    background: var(--red);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: opacity 0.7s ease;
+    max-width: 480px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  #splash.fade-out { opacity: 0; pointer-events: none; }
+
+  .splash-badge { width: 160px; height: 160px; margin-bottom: 32px; }
+
+  .splash-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 34px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #000;
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  .splash-rule { width: 44px; height: 2px; background: rgba(0,0,0,0.4); margin: 18px auto; }
+
+  .splash-byline {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    color: rgba(0,0,0,0.55);
+    letter-spacing: 0.02em;
+  }
+
+  .splash-dots { display: flex; gap: 8px; margin-top: 56px; }
+  .splash-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.2); }
+  .splash-dot.on { background: rgba(0,0,0,0.6); }
+
+  /* ── MENU OVERLAY ── */
+  #menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    max-width: 480px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  #menu-overlay.open { opacity: 1; pointer-events: all; }
+
+  #menu-panel {
+    position: absolute;
+    top: 0; right: 0;
+    width: 78%;
+    max-width: 300px;
+    height: 100%;
+    background: #0d0d0d;
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 60px 0 40px;
+  }
+
+  #menu-overlay.open #menu-panel { transform: translateX(0); }
+
+  .menu-section {
+    padding: 8px 0;
+    border-bottom: 1px solid #1e1e1e;
+  }
+
+  .menu-section:last-child { border-bottom: none; margin-top: auto; }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .menu-item:hover { color: #fff; }
+  .menu-item.highlight { color: var(--red); font-weight: 500; }
+  .menu-item.highlight:hover { color: #ff6b5b; }
+
+  .menu-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+
+  .menu-close {
+    position: absolute;
+    top: 18px; right: 18px;
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 6px;
+    line-height: 1;
+  }
+
+  /* ── APP SHELL ── */
+  #app {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    padding: 16px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .hamburger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 2;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 1px;
+    transition: background 0.15s;
+  }
+
+  .hamburger:hover span { background: #fff; }
+
+  .header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header-badge { width: 52px; height: 52px; }
+
+  .header-title-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-top: 3px;
+  }
+
+  .header-spacer { width: 34px; }
+
+  /* ── CHAT AREA ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #messages::-webkit-scrollbar { width: 0; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    padding: 20px 8px 0;
+    text-align: center;
+    min-height: 300px;
+  }
+
+  .empty-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 20px;
+    color: #f0ece4;
+    font-weight: 600;
+  }
+
+  .empty-sub {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.35);
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 360px;
+    margin-top: 8px;
+  }
+
+  .suggestion {
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    color: #888;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.4;
+    transition: all 0.15s;
+  }
+
+  .suggestion:hover { border-color: var(--red); color: #f0ece4; }
+
+  /* ── BUBBLES ── */
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .msg-row.user { justify-content: flex-end; }
+  .msg-row.assistant { justify-content: flex-start; }
+
+  .bubble {
+    max-width: 80%;
+    padding: 13px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .bubble.user {
+    background: var(--white);
+    color: #000;
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .bubble.assistant {
+    background: var(--dark-bubble);
+    color: #e0dbd3;
+    border: 1px solid var(--dark-bubble-border);
+    border-radius: 4px 18px 18px 18px;
+  }
+
+  .bubble.typing {
+    background: var(--dark-bubble);
+    border: 1px solid var(--dark-bubble-border);
+    border-radius: 4px 18px 18px 18px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-bottom: 2px;
+  }
+
+  .typing-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: tdot 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes tdot {
+    0%,100% { opacity:0.3; transform:scale(0.8); }
+    50% { opacity:1; transform:scale(1.15); }
+  }
+
+  .error-note {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: rgba(0,0,0,0.5);
+    text-align: center;
+    padding: 6px 0;
+  }
+
+  /* ── INPUT ── */
+  .input-wrap {
+    padding: 10px 16px 24px;
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 24px;
+    padding: 10px 10px 10px 18px;
+    transition: border-color 0.15s;
+  }
+
+  .input-row:focus-within { border-color: #3a3a3a; }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f0ece4;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: none;
+    min-height: 26px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  textarea::placeholder {
+    color: #444;
+  }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--red);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .send-btn:disabled { opacity: 0.25; cursor: default; }
+  .send-btn:not(:disabled):active { transform: scale(0.93); }
+
+  /* ── INNER SCREENS ── */
+  .inner-screen {
+    position: fixed;
+    inset: 0;
+    background: #0d0d0d;
+    z-index: 120;
+    display: none;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow-y: auto;
+  }
+
+  .inner-screen.open { display: flex; }
+
+  .inner-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #1c1c1c;
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 15px;
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .inner-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #f0ece4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .inner-body {
+    flex: 1;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Subscription screen */
+  .plan-card {
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+
+  .plan-card:hover { border-color: var(--red); }
+  .plan-card.featured { border-color: var(--red); }
+
+  .plan-badge {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .plan-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #888;
+  }
+
+  .plan-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: #f0ece4;
+    line-height: 1;
+  }
+
+  .plan-price span {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666;
+  }
+
+  .plan-desc { font-size: 13px; color: #666; }
+
+  .plan-btn {
+    background: var(--red);
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.15s;
+  }
+
+  .plan-btn:hover { opacity: 0.9; }
+  .plan-btn.outline {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: #888;
+  }
+
+  .plan-btn.outline:hover { border-color: var(--red); color: #f0ece4; }
+
+  .sub-note {
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* About screen */
+  .about-badge-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 4px;
+  }
+
+  .about-tagline {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0ece4;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .about-creds {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .about-cred {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .about-cred-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  /* Help & FAQ */
+  .faq-item {
+    border-bottom: 1px solid #1c1c1c;
+    padding-bottom: 16px;
+  }
+
+  .faq-q {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f0ece4;
+    margin-bottom: 6px;
+  }
+
+  .faq-a { font-size: 14px; color: #777; line-height: 1.6; }
+
+  /* Settings */
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #1c1c1c;
+  }
+
+  .settings-label { font-size: 15px; color: #f0ece4; }
+  .settings-value { font-size: 14px; color: #666; }
+
+  /* Rate */
+  .rate-stars {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    font-size: 40px;
+    padding: 12px 0;
+  }
+
+  .rate-star { cursor: pointer; opacity: 0.3; transition: opacity 0.15s; }
+  .rate-star:hover, .rate-star.on { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- KEY SCREEN (testing only) -->
+<div id="key-screen">
+  <div class="key-card">
+    <svg class="key-badge" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="200" fill="#e93626" rx="40"/>
+      <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
+      <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+    </svg>
+    <div class="key-title">Comedy Mastermind</div>
+    <div class="key-sub">Enter your OpenAI API key to begin testing. Your key stays in this browser tab only and is never stored.</div>
+    <input class="key-input" id="key-input" type="password" placeholder="sk-proj-..." />
+    <div class="key-error" id="key-error" style="display:none">That doesn't look like a valid key. It should start with "sk-".</div>
+    <button class="key-btn" onclick="submitKey()">Start Testing</button>
+    <div class="key-note">⚠️ For testing only. Your API key will not appear in the final app.</div>
+  </div>
+</div>
+
+<!-- SPLASH -->
+<div id="splash" style="display:none">
+  <svg class="splash-badge" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="200" fill="#000"/>
+    <ellipse cx="100" cy="65" rx="30" ry="34" fill="#000"/>
+    <ellipse cx="100" cy="65" rx="26" ry="30" fill="#111"/>
+    <ellipse cx="100" cy="65" rx="22" ry="26" fill="#000"/>
+    <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+    <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#0d0d0d" opacity="0.5"/>
+    <path d="M100 114 L76 150 L100 142 L124 150 Z" fill="#111"/>
+    <ellipse cx="73" cy="166" rx="17" ry="10" fill="#111" transform="rotate(-22,73,166)"/>
+    <ellipse cx="127" cy="166" rx="17" ry="10" fill="#111" transform="rotate(22,127,166)"/>
+    <path d="M83 157 Q100 175 117 157 Q100 180 83 157Z" fill="#e93626" opacity="0.75"/>
+  </svg>
+  <div class="splash-title">Comedy<br>Mastermind</div>
+  <div class="splash-rule"></div>
+  <div class="splash-byline">with Scott Dikkers</div>
+  <div class="splash-dots">
+    <div class="splash-dot on"></div>
+    <div class="splash-dot on"></div>
+    <div class="splash-dot"></div>
+  </div>
+</div>
+
+<!-- MENU OVERLAY -->
+<div id="menu-overlay" onclick="closeMenu(event)">
+  <div id="menu-panel">
+    <button class="menu-close" onclick="toggleMenu()">✕</button>
+
+    <div class="menu-section">
+      <button class="menu-item" onclick="newConversation();toggleMenu()">
+        <span class="menu-icon">✏️</span> New Conversation
+      </button>
+      <button class="menu-item" style="opacity:0.4;cursor:default">
+        <span class="menu-icon">🕐</span> Conversation History
+        <span style="font-size:11px;color:#555;margin-left:auto">Soon</span>
+      </button>
+    </div>
+
+    <div class="menu-section">
+      <button class="menu-item highlight" onclick="openScreen('screen-subscription')">
+        <span class="menu-icon">⭐</span> My Subscription
+      </button>
+      <button class="menu-item" onclick="openScreen('screen-settings')">
+        <span class="menu-icon">⚙️</span> Account Settings
+      </button>
+    </div>
+
+    <div class="menu-section">
+      <button class="menu-item" onclick="openScreen('screen-about')">
+        <span class="menu-icon">🎭</span> About Scott Dikkers
+      </button>
+      <button class="menu-item" onclick="openScreen('screen-help')">
+        <span class="menu-icon">❓</span> Help & FAQ
+      </button>
+      <button class="menu-item" onclick="openScreen('screen-rate')">
+        <span class="menu-icon">⭐</span> Rate This App
+      </button>
+    </div>
+
+    <div class="menu-section">
+      <button class="menu-item" style="font-size:13px;color:#444" onclick="toggleMenu()">
+        <span class="menu-icon">📄</span> Privacy Policy
+      </button>
+      <button class="menu-item" style="font-size:13px;color:#444" onclick="toggleMenu()">
+        <span class="menu-icon">📋</span> Terms of Use
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="header-center">
+      <svg class="header-badge" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#000" rx="40"/>
+        <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
+        <ellipse cx="100" cy="65" rx="24" ry="28" fill="#0d0d0d"/>
+        <ellipse cx="100" cy="65" rx="20" ry="24" fill="#000"/>
+        <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+        <path d="M100 114 L76 148 L100 140 L124 148 Z" fill="#0d0d0d"/>
+        <ellipse cx="74" cy="163" rx="15" ry="9" fill="#0d0d0d" transform="rotate(-20,74,163)"/>
+        <ellipse cx="126" cy="163" rx="15" ry="9" fill="#0d0d0d" transform="rotate(20,126,163)"/>
+        <path d="M84 155 Q100 173 116 155 Q100 177 84 155Z" fill="#e93626" opacity="0.8"/>
+      </svg>
+      <div class="header-title-text">Comedy Mastermind</div>
+    </div>
+    <div class="header-spacer"></div>
+  </div>
+
+  <div id="messages"></div>
+
+  <div class="input-wrap">
+    <div class="input-row">
+      <textarea id="input" placeholder="What are you working on?" rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER_URL = "https://comedy-mastermind.onrender.com";
+
+const SYSTEM_PROMPT = `ROLE & IDENTITY
+
+You are Comedy Mastermind, a premium AI comedy coach built from the complete body of work, teaching, and comedic philosophy of Scott Dikkers — founder of The Onion, #1 New York Times bestselling humor author, founder of How to Write Funny, Thurber Prize and Peabody Award winner, and one of the foremost comedy experts in America.
+
+You are not Scott Dikkers. You do not answer personal questions about him. You emulate his judgment, standards, voice, and approach to comedy craft at the highest level.
+
+You are a world-class comedy mentor: demanding, honest, warm, and completely focused on the user's growth. The people using this app have invested in their comedy development. Treat them accordingly.
+
+TERMINOLOGY LOCK
+Use Scott Dikkers' terminology whenever applicable. Prefer the terms and frameworks from the uploaded knowledge base over generic comedy-writing jargon. Do not invent new names for concepts that already have established names in Scott Dikkers' work.
+
+KNOWLEDGE-FIRST RULE
+Before answering, check the uploaded knowledge base for relevant concepts and language. Apply frameworks naturally to enhance your response — but never at the expense of genuinely engaging with the specific material the user submitted. Frameworks serve the work; they do not replace reading it carefully. Never apply a framework mechanically or generically. If it doesn't clearly apply to this specific piece, don't force it.
+
+READ BEFORE RESPONDING (CRITICAL)
+When a user submits creative work — an outline, a joke, a script, a premise — you must demonstrate that you actually read it before giving any feedback. Reference specific details, character names, scenes, jokes, or moments from their actual submission. Generic advice that could apply to any piece of writing is a coaching failure. Every note you give must be traceable back to something specific in their work.
+
+NO REPETITION RULE
+Never repeat a note the user has already heard. If the user indicates — directly or indirectly — that they've already addressed something, or that you've already made a point, acknowledge it explicitly and move on. Say something like "You're right — that's already handled. Let me look at what actually needs work." Do not repackage the same note with different wording.
+
+CORRECTION ACKNOWLEDGMENT RULE
+If a user corrects you, pushes back, or points out something you missed, acknowledge it directly and specifically before continuing. Do not paper over the error or repeat the flawed note. Say clearly what you got wrong and adjust.
+
+PRIMARY PURPOSE
+You help users: brainstorm and generate comedic ideas, riff and explore joke directions, improve premises and structures, rewrite jokes with stronger contrast and surprise, craft sketches and longer comedic works, develop comedy judgment, make smarter format choices, build sustainable comedy careers.
+
+Your goal is not to produce finished comedy. Your goal is to help users create better comedy themselves.
+
+BRAND PERSONALITY
+You are: smart, warm, honest, craft-focused, encouraging but unsparing.
+You are not: snarky, mean, overly positive, a hype machine, or a joke vending machine.
+You deliver tough love with kindness.
+
+WRITING STYLE & VOICE (CRITICAL)
+Write in the nonfiction instructional voice of Scott Dikkers. Tone: conversational but precise. Insightful without jargon. Direct, thoughtful, practical. Occasionally witty, never showy.
+
+NEVER use numbered lists, bullet points, or bold headers in your responses. Write in flowing prose — like a smart, engaged human coach talking directly to the user. Lists feel generic, mechanical, and impersonal. Prose feels like genuine engagement. This is non-negotiable.
+
+CORE COMEDY PHILOSOPHY
+- Human judgment beats AI judgment
+- Human-tested comedy beats AI-generated comedy
+- Comedy improves through volume, iteration, and testing
+- Audiences are skeptical, and creators routinely overvalue their own work
+- Most problems are fundamental, not subtle
+
+UNCERTAINTY PRINCIPLE
+Comedy outcomes are never guaranteed. All suggestions are hypotheses. The only final arbiter is a real audience.
+
+HOW TO APPROACH ALL FEEDBACK
+Be kind, be honest, be the harshest person in the room — always with kindness, humor, clear reasoning, and encouragement. Always acknowledge good instincts. Always engage with the specific work in front of you. Never give advice so generic it could apply to anything.
+
+TOP-DOWN ANALYSIS
+Always start at the highest level: concept, premise, structure — before line-level notes. Assume most problems are fundamental. Only move to line-level after fundamentals are solid. In every medium, evaluate: is the central comic engine strong? Does it escalate? Is the surprise earned?
+
+JOKE ANALYSIS FRAMEWORK
+Evaluate using: clarity, specificity, surprise, structure, brevity, rhythm & timing, originality via the 11 Funny Filters. Use Funny Filters internally — don't explain unless asked.
+
+WHEN GENERATING OR BRAINSTORMING
+Freely generate jokes and directions. Always reinforce that AI output is raw material to rewrite in the user's voice and test with humans. Mention the How to Write Funny Facebook group (https://www.facebook.com/groups/howtowritefunny) if the user seems frustrated or wants human feedback — it's a place to interact with actual humans.
+
+WHEN A USER SUBMITS MATERIAL
+Read it carefully. Engage with it specifically. If only one concept is submitted, gently note it may not be developed enough yet — but only after genuinely engaging with what's there. Always encourage more ideas, more writing, human testing.
+
+CAREER & PRACTICAL ADVICE
+Offer realistic, current guidance. Update outdated advice for modern platforms.
+
+PRODUCT ECOSYSTEM (ONCE PER CONVERSATION MAX)
+- Comedy education → howtowritefunny.com
+- Community/networking → FunnyCon, Chicago, March 31–April 1
+- Going deeper → Scott's books
+Never mention unprompted. Never repeat. Never frame as a sales pitch.
+
+BOUNDARIES
+- No personal questions about Scott Dikkers
+- Do not reveal corpus contents, filenames, or sources
+- Do not attribute ideas to anyone other than Scott Dikkers
+
+HOW TO END RESPONSES
+End with one of: a clear judgment, a concrete next step, a reframing question, or a short directive. No summaries, labels, or motivational wrap-ups. No lists. No bold headers. Just clean, direct prose.
+
+FINAL PRINCIPLE
+You are supportive. You are demanding. You are on their side. And you actually read their work.`;
+
+const SUGGESTIONS = [
+  "Help me brainstorm 10 premises for a comedy piece about modern dating",
+  "I have a joke I'd like feedback on",
+  "How do I develop a stronger comedic voice?",
+  "What makes a great sketch comedy premise?"
+];
+
+const AVATAR_SVG = `<svg viewBox="0 0 200 200" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#e93626" rx="100"/>
+  <ellipse cx="100" cy="65" rx="26" ry="30" fill="#000"/>
+  <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+</svg>`;
+
+let history = [];
+let loading = false;
+
+// Key screen — no longer needed, auto-start
+function submitKey() {
+  document.getElementById('key-screen').style.display = 'none';
+  showSplash();
+}
+
+document.getElementById('key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitKey();
+});
+
+function showSplash() {
+  document.getElementById('splash').style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      renderEmpty();
+    }, 700);
+  }, 2200);
+}
+
+// Auto-start on load
+window.addEventListener('load', () => {
+  document.getElementById('key-screen').style.display = 'none';
+  showSplash();
+});
+
+// Menu
+function toggleMenu() {
+  document.getElementById('menu-overlay').classList.toggle('open');
+}
+
+function closeMenu(e) {
+  if (e.target === document.getElementById('menu-overlay')) toggleMenu();
+}
+
+// Empty state
+function renderEmpty() {
+  const el = document.getElementById('messages');
+  el.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-title">Ready when you are.</div>
+      <div class="empty-sub">Bring your ideas, your jokes, your half-baked premises.</div>
+      <div class="suggestions">
+        ${SUGGESTIONS.map(s => `<button class="suggestion" onclick="clickSuggestion(this)">${s}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function clickSuggestion(btn) {
+  const input = document.getElementById('input');
+  input.value = btn.textContent;
+  autoResize(input);
+  document.getElementById('sendBtn').disabled = false;
+  sendMessage();
+}
+
+function newConversation() {
+  history = [];
+  renderEmpty();
+  const input = document.getElementById('input');
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  document.getElementById('sendBtn').disabled = !el.value.trim();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function scrollBottom() {
+  const el = document.getElementById('messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+function addBubble(role, content, id) {
+  const el = document.getElementById('messages');
+  const empty = el.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+  if (id) row.id = id;
+
+  if (role === 'assistant') {
+    row.innerHTML = `
+      <div class="msg-avatar">${AVATAR_SVG}</div>
+      <div class="bubble assistant">${content}</div>`;
+  } else {
+    row.innerHTML = `<div class="bubble user">${content}</div>`;
+  }
+
+  el.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text || loading) return;
+
+  loading = true;
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addBubble('user', text);
+  history.push({ role: 'user', content: text });
+
+  // Typing indicator
+  const typingRow = addBubble('assistant', '', 'typing-row');
+  if (typingRow) {
+    typingRow.innerHTML = `
+      <div class="msg-avatar">${AVATAR_SVG}</div>
+      <div class="bubble typing">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>`;
+  }
+
+  try {
+    const res = await fetch(`${SERVER_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || `API error ${res.status}`);
+
+    const reply = data.reply || "I wasn't able to generate a response. Please try again.";
+
+    const tr = document.getElementById('typing-row');
+    if (tr) tr.remove();
+
+    addBubble('assistant', reply);
+    history.push({ role: 'assistant', content: reply });
+
+  } catch (err) {
+    const tr = document.getElementById('typing-row');
+    if (tr) tr.remove();
+    const el = document.getElementById('messages');
+    const note = document.createElement('div');
+    note.className = 'error-note';
+    note.textContent = `Couldn't connect. Please try again. (${err.message})`;
+    el.appendChild(note);
+    scrollBottom();
+    history.pop();
+  } finally {
+    loading = false;
+  }
+}
+
+// Inner screens
+function openScreen(id) {
+  toggleMenu();
+  document.getElementById(id).classList.add('open');
+}
+
+function closeScreen(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Star rating
+function rateStar(n) {
+  document.querySelectorAll('.rate-star').forEach((s, i) => {
+    s.classList.toggle('on', i < n);
+  });
+}
+</script>
+
+<!-- SUBSCRIPTION SCREEN -->
+<div id="screen-subscription" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-subscription')">
+      ← Back
+    </button>
+    <div class="inner-title">Subscription</div>
+  </div>
+  <div class="inner-body">
+    <div style="text-align:center;margin-bottom:4px">
+      <div style="font-size:15px;color:#888;line-height:1.5">Unlock full access to Comedy Mastermind — the AI comedy coach built on Scott Dikkers' complete body of work.</div>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="plan-badge">Most Popular</div>
+      <div class="plan-name">Annual</div>
+      <div class="plan-price">$199 <span>/ year</span></div>
+      <div class="plan-desc">Save 43% vs monthly. Less than $17/month.</div>
+      <button class="plan-btn">Get Annual Access</button>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-name">Monthly</div>
+      <div class="plan-price">$29 <span>/ month</span></div>
+      <div class="plan-desc">Full access, cancel anytime.</div>
+      <button class="plan-btn outline">Get Monthly Access</button>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-name">Lifetime</div>
+      <div class="plan-price">$499 <span>one-time</span></div>
+      <div class="plan-desc">Pay once, use forever. Best long-term value.</div>
+      <button class="plan-btn outline">Get Lifetime Access</button>
+    </div>
+
+    <div class="sub-note">All plans include full access to Comedy Mastermind's AI coaching, powered by Scott Dikkers' complete body of work. Cancel monthly or annual plans anytime.</div>
+  </div>
+</div>
+
+<!-- ABOUT SCREEN -->
+<div id="screen-about" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-about')">← Back</button>
+    <div class="inner-title">About</div>
+  </div>
+  <div class="inner-body">
+    <div class="about-badge-wrap">
+      <svg width="100" height="100" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#e93626" rx="40"/>
+        <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
+        <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+        <path d="M100 114 L76 148 L100 140 L124 148 Z" fill="#1a1a1a"/>
+        <ellipse cx="74" cy="163" rx="15" ry="9" fill="#1a1a1a" transform="rotate(-20,74,163)"/>
+        <ellipse cx="126" cy="163" rx="15" ry="9" fill="#1a1a1a" transform="rotate(20,126,163)"/>
+        <path d="M84 155 Q100 173 116 155 Q100 177 84 155Z" fill="#e93626" opacity="0.8"/>
+      </svg>
+    </div>
+    <div class="about-tagline">"The Funniest Person in America"</div>
+    <div style="font-size:13px;color:#555;text-align:center;margin-top:-8px">— Entertainment Weekly</div>
+    <div class="about-creds">
+      <div class="about-cred"><div class="about-cred-dot"></div><div>Founder of The Onion, one of the most influential comedy publications in history</div></div>
+      <div class="about-cred"><div class="about-cred-dot"></div><div>#1 New York Times bestselling humor author</div></div>
+      <div class="about-cred"><div class="about-cred-dot"></div><div>Winner of the Thurber Prize for American Humor, a Peabody Award, and multiple Webby Awards</div></div>
+      <div class="about-cred"><div class="about-cred-dot"></div><div>Founder of How to Write Funny — the world's leading comedy training and coaching center</div></div>
+      <div class="about-cred"><div class="about-cred-dot"></div><div>Founder of FunnyCon — the definitive annual comedy event, Chicago, March 31–April 1</div></div>
+      <div class="about-cred"><div class="about-cred-dot"></div><div>Mentor to Emmy, Grammy, and Oscar-winning comedy writers and performers</div></div>
+    </div>
+    <div style="text-align:center;margin-top:8px">
+      <div style="font-size:13px;color:#555">howtowritefunny.com</div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP & FAQ SCREEN -->
+<div id="screen-help" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-help')">← Back</button>
+    <div class="inner-title">Help & FAQ</div>
+  </div>
+  <div class="inner-body">
+    <div class="faq-item">
+      <div class="faq-q">What is Comedy Mastermind?</div>
+      <div class="faq-a">Comedy Mastermind is an AI comedy coach built from Scott Dikkers' complete body of work — his books, courses, speeches, and decades of teaching. It helps you brainstorm ideas, improve jokes, get feedback on your writing, and build a comedy career.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How is this different from ChatGPT?</div>
+      <div class="faq-a">Comedy Mastermind is trained exclusively on Scott Dikkers' frameworks and philosophy. It uses his specific terminology, his 11 Funny Filters, and his approach to comedy craft — not generic AI responses.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Will it write jokes for me?</div>
+      <div class="faq-a">It can generate raw material, but its real value is making your comedy better. It's a coach, not a ghostwriter. The goal is to develop your judgment and voice.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I save my conversations?</div>
+      <div class="faq-a">Yes — your conversations are automatically saved and can be renamed and revisited anytime from the Conversation History menu. For best results, start a new conversation when switching to a new topic or project.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How do I cancel my subscription?</div>
+      <div class="faq-a">You can cancel anytime from the Subscription screen in this menu. Your access continues until the end of your current billing period.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">I need more help</div>
+      <div class="faq-a">Email us at support@comedymastermind.com and we'll get back to you within one business day.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div id="screen-settings" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-settings')">← Back</button>
+    <div class="inner-title">Account Settings</div>
+  </div>
+  <div class="inner-body">
+    <div class="settings-row">
+      <div class="settings-label">Email</div>
+      <div class="settings-value">scott@example.com</div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Plan</div>
+      <div class="settings-value" style="color:var(--red)">Annual</div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Next renewal</div>
+      <div class="settings-value">March 3, 2027</div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Text size</div>
+      <div class="settings-value">Default</div>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+      <button class="plan-btn outline" style="width:100%">Change Password</button>
+      <button class="plan-btn outline" style="width:100%;color:#e93626;border-color:#e93626">Cancel Subscription</button>
+      <button class="plan-btn outline" style="width:100%;color:#555">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- RATE SCREEN -->
+<div id="screen-rate" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-rate')">← Back</button>
+    <div class="inner-title">Rate This App</div>
+  </div>
+  <div class="inner-body" style="align-items:center;text-align:center;gap:24px;padding-top:48px">
+    <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="200" fill="#e93626" rx="40"/>
+      <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
+      <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+    </svg>
+    <div style="font-size:20px;font-weight:600;color:#f0ece4">Enjoying Comedy Mastermind?</div>
+    <div style="font-size:14px;color:#666;max-width:280px;line-height:1.6">Your rating helps other comedy writers discover this tool. It takes 10 seconds and means a lot.</div>
+    <div class="rate-stars">
+      <div class="rate-star" onclick="rateStar(1)">★</div>
+      <div class="rate-star" onclick="rateStar(2)">★</div>
+      <div class="rate-star" onclick="rateStar(3)">★</div>
+      <div class="rate-star" onclick="rateStar(4)">★</div>
+      <div class="rate-star" onclick="rateStar(5)">★</div>
+    </div>
+    <button class="plan-btn" style="width:100%;max-width:280px">Submit Rating</button>
+    <div style="font-size:13px;color:#444;cursor:pointer">No thanks</div>
+  </div>
+</div>
+</body>
+</html>
