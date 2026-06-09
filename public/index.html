@@ -1061,12 +1061,22 @@ function addBubble(role, content, id) {
   if (id) row.id = id;
  
   if (role === 'assistant') {
-    row.innerHTML = `
-      <div class="msg-avatar">${AVATAR_SVG}</div>
-      <div class="bubble assistant">${content}</div>`;
-  } else {
-    row.innerHTML = `<div class="bubble user">${content}</div>`;
-  }
+  const avatarDiv = document.createElement('div');
+  avatarDiv.className = 'msg-avatar';
+  const avatarImg = document.createElement('img');
+  avatarImg.src = '/avatar.png';
+  avatarImg.width = 30;
+  avatarImg.height = 30;
+  avatarImg.style.cssText = 'border-radius:50%;display:block;';
+  avatarDiv.appendChild(avatarImg);
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble assistant';
+  bubble.textContent = content;
+  row.appendChild(avatarDiv);
+  row.appendChild(bubble);
+} else {
+  row.innerHTML = `<div class="bubble user">${content}</div>`;
+}
  
   el.appendChild(row);
   scrollBottom();
