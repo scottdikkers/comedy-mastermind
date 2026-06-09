@@ -954,7 +954,7 @@ let abortController = null;
   const tr = document.getElementById('typing-row');
   if (tr) tr.remove();
   loading = false;
-  setSendBtn(false);
+  setSendBtn(true);
   history.pop();
 }
 
@@ -1037,7 +1037,7 @@ function newConversation() {
   const input = document.getElementById('input');
   input.value = '';
   input.style.height = 'auto';
-  setSendBtn(true);
+  setSendBtn(false);
 }
  
 function autoResize(el) {
