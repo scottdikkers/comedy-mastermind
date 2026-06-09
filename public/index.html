@@ -1104,17 +1104,18 @@ async function sendMessage() {
  
   try {
     // 90 second timeout to allow Render free tier to wake up
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 90000);
  
     const res = await fetch(`${SERVER_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: history }),
-      signal: controller.signal
+      signal: abortController.signal
     });
  
     clearTimeout(timeout);
+abortController = null;
  
     const data = await res.json();
  
