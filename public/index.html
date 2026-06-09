@@ -1085,7 +1085,7 @@ async function sendMessage() {
   loading = true;
   input.value = '';
   input.style.height = 'auto';
-  document.getElementById('sendBtn').disabled = true;
+  setSendBtn(true);
  
   addBubble('user', text);
   history.push({ role: 'user', content: text });
