@@ -97,13 +97,16 @@ FINAL PRINCIPLE
 You are supportive. You are demanding. You are on their side. And you actually read their work.`;
 
 app.post('/chat', async (req, res) => {
+  console.log('Chat route hit, body:', JSON.stringify(req.body).slice(0, 100));
   const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
+    console.log('Invalid messages format');
     return res.status(400).json({ error: 'Invalid messages format' });
   }
 
   try {
+    console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -120,6 +123,7 @@ app.post('/chat', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('Anthropic response status:', response.status);
 
     if (!response.ok) {
       return res.status(response.status).json({ error: data.error?.message || 'API error' });
@@ -133,6 +137,7 @@ app.post('/chat', async (req, res) => {
     res.json({ reply });
 
   } catch (err) {
+    console.log('Error in chat route:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
