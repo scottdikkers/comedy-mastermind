@@ -1552,6 +1552,7 @@ abortController = null;
 function openScreen(id) {
   toggleMenu();
   document.getElementById(id).classList.add('open');
+  if (id === 'screen-history') loadConversations();
 }
  
 function closeScreen(id) {
