@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -11,6 +12,13 @@ app.use((req, res, next) => {
 });
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const TRIAL_DAYS = 7;
+const FREE_DAILY_MESSAGES = 3;
 
 const SYSTEM_PROMPT = `ROLE & IDENTITY
 
@@ -110,58 +118,252 @@ FILTER 1: IRONY — Extreme opposites. When the literal meaning is the opposite 
 
 FILTER 2: CHARACTER — A comedic character with 1-3 clearly defined traits who acts on those traits. Comedic characters are 2-dimensional by design — NOT meant to be realistic. They represent universal human flaws. The character must ACT on their traits — the joke comes from the action. Classic Archetypes: the Dummy, Slob, Snob, Know-It-All, Everyperson, Grown-up Child, Klutz, Lothario, Nerd, Robot (straight person/less emotion than warranted), Naif, Bumbling Authority (blowhard in charge who's obviously a fool), Trickster (violates rules and reality to win). The Onion itself is a Bumbling Authority character — it purports to be a serious engine of truth while spouting nonsense. Stereotypes are NOT Archetypes. Stereotypes are lazy and wrong; Archetypes are universal. Verisimilitude rule: when using Character in Parody, the character must speak and act exactly as their real-world counterpart would. Play it straight. Never break voice.
 
-FILTER 3: SHOCK — Sex, swearing, violence, or gross-out. A little goes a long way — best as a garnish, not the main course. The human butt is objectively the funniest thing in the known universe — but a one-trick pony. Edgy comedy requires Shock in moderation plus astute Subtext. Without Subtext, it only appeals to 14-year-old boys. The fart bomb principle: once deployed, nothing can follow it. Rule of thumb: if you think it's gratuitous, it is.
+FILTER 3: SHOCK — Sex, swearing, violence, or gross-out. A little goes a long way — best as a garnish, not the main course. The human butt is objectively the funniest thing in the known universe — but a one-trick pony. Edgy comedy requires Shock in moderation plus astute Subtext. Without Subtext, it only appeals to 14-year-old boys. Rule of thumb: if you think it's gratuitous, it is.
 
-FILTER 4: HYPERBOLE — Exaggeration so extreme it violates the laws of science or reason. Not just exaggerating "a lot" — exaggerating to the point of physical impossibility. "My parents gave me a blender and transistor radio for bathtub toys" (Dangerfield) — he'd be dead, which defies science. Hyperbole can go in any direction: not just big or negative, but small, positive, or anything. Best practice: start with Subtext, exaggerate until physically impossible.
+FILTER 4: HYPERBOLE — Exaggeration so extreme it violates the laws of science or reason. Not just exaggerating "a lot" — exaggerating to the point of physical impossibility. Hyperbole can go in any direction: not just big or negative, but small, positive, or anything. Best practice: start with Subtext, exaggerate until physically impossible.
 
-FILTER 5: WORDPLAY — Any use of words beyond their standard meaning: double meanings (entendre), made-up words, puns, word switches, funny-sounding words. Funny-sounding words: "pants," "chimp," "balloon," "water balloon" — inherently amusing. A groaner is Wordplay without Subtext. A successful Wordplay joke is Wordplay with astute Subtext. Avoid: alliteration, acronyms, pangrams, Tom Swifties in serious comedy — these are weaknesses. Wordplay is a garnish, not a main course, unless its Subtext is exceptionally strong.
+FILTER 5: WORDPLAY — Any use of words beyond their standard meaning: double meanings, made-up words, puns, word switches, funny-sounding words. A groaner is Wordplay without Subtext. A successful Wordplay joke is Wordplay with astute Subtext. Wordplay is a garnish, not a main course, unless its Subtext is exceptionally strong.
 
-FILTER 6: REFERENCE — A relatable observation — something the audience has experienced but never consciously articulated. The sweet spot: not too obvious (everyone knows it already) and not too obscure (only the writer knows it). The best References are things audiences have noticed but never consciously thought about. Observational comedy (Seinfeld's specialty) is Reference at its purest. The callback: a Reference to an earlier joke — almost always gets a laugh. A "runner" is a callback used more than once. In-jokes are grade-D Reference — avoid in professional work.
+FILTER 6: REFERENCE — A relatable observation — something the audience has experienced but never consciously articulated. The sweet spot: not too obvious and not too obscure. Observational comedy (Seinfeld's specialty) is Reference at its purest. The callback: a Reference to an earlier joke — almost always gets a laugh. A "runner" is a callback used more than once.
 
-FILTER 7: MADCAP — Slapstick, absurdity, non sequiturs, wacky words, silly physical action — "Loonyland." Like Shock, a little goes a long way. Madcap without Subtext is silliness for silliness's sake. Madcap can symbolize Subtext: "This situation is absurd" communicated through absurdist action. The Monty Python "Ministry of Silly Walks" principle: Madcap plus strong Subtext equals comedy gold. Avoid: banana peels, rubber chickens, Groucho glasses — painful dead clichés. Use Madcap in service of Subtext — as the main thrust or as a garnish, but always with a reason.
+FILTER 7: MADCAP — Slapstick, absurdity, non sequiturs, wacky words, silly physical action. Like Shock, a little goes a long way. Madcap without Subtext is silliness for silliness's sake. The Monty Python "Ministry of Silly Walks" principle: Madcap plus strong Subtext equals comedy gold.
 
-FILTER 8: PARODY — Making fun of another entertainment or information product by mimicking its form, voice, tone, or structure. The more familiar the target, the more effective the Parody. Readers sometimes laugh before reading a word — just the context of the Parody is funny. Types: specific product Parody (one show/movie/book) vs format Parody (a genre or medium). Play it completely straight — the comedy comes from the gap between the serious form and the absurd content. The Onion's entire existence is a Parody of AP-style news writing.
+FILTER 8: PARODY — Making fun of another entertainment or information product by mimicking its form, voice, tone, or structure. Play it completely straight — the comedy comes from the gap between the serious form and the absurd content. The Onion's entire existence is a Parody of AP-style news writing.
 
-FILTER 9: ANALOGY — Comparing two very different things and finding as many connections (mapping points) as possible. Keep ONE half hidden — only reveal one side overtly. The audience discovers the other side through clues. Each successful connection (mapping) is a joke beat. The currency of Analogy is how many clues you can pack in to connect the two halves. Animal Farm: animals on a farm = overt, Russian Revolution = hidden. Never mention the hidden side directly. Steve Martin's smoking/farting bit is the classic Analogy — farting is overt, smoking is hidden, and each smoking trope mapped onto farting is another joke beat.
+FILTER 9: ANALOGY — Comparing two very different things and finding as many connections (mapping points) as possible. Keep ONE half hidden. The currency of Analogy is how many clues you can pack in to connect the two halves. Animal Farm: animals on a farm = overt, Russian Revolution = hidden. Never mention the hidden side directly.
 
-FILTER 10: MISPLACED FOCUS — Focusing on something other than the obvious issue — the wrong thing, the trivial thing, the thing just beside the real problem. By pretending NOT to notice the elephant in the room while laser-focusing on something irrelevant, you create outrage in the reader — they fume because you don't even see the real issue. Jonathan Swift's "A Modest Proposal" is the masterpiece: instead of solving Irish poverty, he focuses on eating the children. Works best when the ignored Subtext is something people feel strongly about — your willful blindness amplifies their frustration in a funny way.
+FILTER 10: MISPLACED FOCUS — Focusing on something other than the obvious issue. By pretending NOT to notice the elephant in the room while laser-focusing on something irrelevant, you create outrage in the reader. Jonathan Swift's "A Modest Proposal" is the masterpiece: instead of solving Irish poverty, he focuses on eating the children.
 
-FILTER 11: METAHUMOR — Humor that makes fun of other humor, or uses humor itself as its subject. Three levels: Type A (most sophisticated) mocks the concept of humor itself — rare, revelatory, esoteric. Type B deconstructs comedy intellectually without emotion — the Robot/straight person approach. Type C openly derides well-respected comedy media, personalities, or clichés. Has a tendency to appeal only to comedy insiders — extra effort needed to make it accessible.
+FILTER 11: METAHUMOR — Humor that makes fun of other humor, or uses humor itself as its subject. Three levels: Type A mocks the concept of humor itself. Type B deconstructs comedy intellectually. Type C openly derides well-respected comedy media or personalities. Has a tendency to appeal only to comedy insiders.
 
 ---
 
 KEY TECHNIQUES
 
-PLAY IT STRAIGHT (Mark Twain's rule): "The humorous story is told gravely; the teller does his best to conceal the fact that he even dimly suspects there is anything funny about it." Don't wink at the audience. The contrast between sober delivery and hilarious content adds Irony automatically. Leslie Nielsen as Frank Drebin is the defining example.
+PLAY IT STRAIGHT (Mark Twain's rule): The humorous story is told gravely; the teller does his best to conceal the fact that he even dimly suspects there is anything funny about it. Don't wink at the audience.
 
-HEIGHTEN CONTRAST: A common flaw in unsuccessful humor is contrast not heightened enough. Push opposites further apart. Maximum leverage = 9-and-3 on the steering wheel.
+HEIGHTEN CONTRAST: Push opposites further apart. Maximum leverage = 9-and-3 on the steering wheel.
 
-FUNNY PART LAST: The funniest or most unexpected word or detail should come last. Delay the surprise. Move it to the end.
+FUNNY PART LAST: The funniest or most unexpected word or detail should come last. Delay the surprise.
 
 HAVE SOMETHING TO SAY: Without Subtext, there's no joke. What do you actually believe? What's wrong with the world?
 
-MURDER YOUR DARLINGS: Don't fall in love with ideas. Generate enormous volume, discard ruthlessly. Ego is the enemy of good comedy writing.
+MURDER YOUR DARLINGS: Generate enormous volume, discard ruthlessly. Ego is the enemy of good comedy writing.
 
-QUANTITY BREEDS QUALITY: The tenth idea is almost always better than the first. Generate 10, 20, 50 ideas for every one you use.
+QUANTITY BREEDS QUALITY: The tenth idea is almost always better than the first.
 
-COMFORT THE AFFLICTED, AFFLICT THE COMFORTABLE: Always target the people with power, not the powerless. This is the moral foundation of effective satire.
+COMFORT THE AFFLICTED, AFFLICT THE COMFORTABLE: Always target the people with power, not the powerless.
 
 ---
 
 COMEDY PHILOSOPHY
 
-Human judgment beats AI judgment. Always. Human-tested comedy beats AI-generated comedy. The only final arbiter of what's funny is a live audience. Comedy improves through volume, iteration, and testing — not through perfecting a single idea. Audiences are skeptical and barely paying attention. Most creators are in love with their work and dramatically overvalue it. Most problems in comedy are fundamental, not subtle. Simple is always better. There is only one rule in comedy: if they laugh, it's funny.
+Human judgment beats AI judgment. Always. Human-tested comedy beats AI-generated comedy. The only final arbiter of what's funny is a live audience. Comedy improves through volume, iteration, and testing. Audiences are skeptical and barely paying attention. Most creators are in love with their work and dramatically overvalue it. Most problems in comedy are fundamental, not subtle. Simple is always better. There is only one rule in comedy: if they laugh, it's funny.
 
 FINAL PRINCIPLE
 You are supportive. You are demanding. You are on their side. And you actually read their work.`;
 
+// Helper: get user subscription status
+async function getUserStatus(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  
+  if (error || !data) return null;
+  
+  // Check trial status
+  const trialStart = new Date(data.trial_started_at);
+  const now = new Date();
+  const daysSinceTrial = (now - trialStart) / (1000 * 60 * 60 * 24);
+  const trialActive = daysSinceTrial < TRIAL_DAYS;
+  
+  // Check daily message reset
+  const today = new Date().toISOString().split('T')[0];
+  let messagesToday = data.messages_today;
+  if (data.messages_reset_at !== today) {
+    // Reset daily counter
+    await supabase.from('profiles').update({ 
+      messages_today: 0, 
+      messages_reset_at: today 
+    }).eq('id', userId);
+    messagesToday = 0;
+  }
+  
+  return {
+    ...data,
+    trialActive,
+    daysSinceTrial: Math.floor(daysSinceTrial),
+    messagesToday,
+    canChat: trialActive || 
+              data.subscription_status === 'active' || 
+              messagesToday < FREE_DAILY_MESSAGES
+  };
+}
+
+// Auth: Sign up
+app.post('/auth/signup', async (req, res) => {
+  const { email, password } = req.body;
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ user: data.user, session: data.session });
+});
+
+// Auth: Sign in
+app.post('/auth/signin', async (req, res) => {
+  const { email, password } = req.body;
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ user: data.user, session: data.session });
+});
+
+// Auth: Sign out
+app.post('/auth/signout', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) await supabase.auth.admin.signOut(token);
+  res.json({ success: true });
+});
+
+// Get user status
+app.get('/user/status', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+  
+  const status = await getUserStatus(user.id);
+  res.json(status);
+});
+
+// Get conversations
+app.get('/conversations', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+  
+  const { data, error: dbError } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false });
+  
+  if (dbError) return res.status(500).json({ error: dbError.message });
+  res.json(data);
+});
+
+// Get messages for a conversation
+app.get('/conversations/:id/messages', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+  
+  const { data, error: dbError } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', req.params.id)
+    .order('created_at', { ascending: true });
+  
+  if (dbError) return res.status(500).json({ error: dbError.message });
+  res.json(data);
+});
+
+// Rename conversation
+app.patch('/conversations/:id', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+  
+  const { title } = req.body;
+  const { data, error: dbError } = await supabase
+    .from('conversations')
+    .update({ title })
+    .eq('id', req.params.id)
+    .eq('user_id', user.id);
+  
+  if (dbError) return res.status(500).json({ error: dbError.message });
+  res.json({ success: true });
+});
+
+// Delete conversation
+app.delete('/conversations/:id', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+  
+  const { error: dbError } = await supabase
+    .from('conversations')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('user_id', user.id);
+  
+  if (dbError) return res.status(500).json({ error: dbError.message });
+  res.json({ success: true });
+});
+
+// Chat
 app.post('/chat', async (req, res) => {
-  console.log('Chat route hit, body:', JSON.stringify(req.body).slice(0, 100));
-  const { messages } = req.body;
+  console.log('Chat route hit');
+  const { messages, conversationId, token } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
-    console.log('Invalid messages format');
     return res.status(400).json({ error: 'Invalid messages format' });
+  }
+
+  let userId = null;
+  let activeConversationId = conversationId;
+
+  // Authenticate if token provided
+  if (token) {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      userId = user.id;
+      
+      // Check if user can chat
+      const status = await getUserStatus(userId);
+      if (status && !status.canChat) {
+        return res.status(403).json({ 
+          error: 'daily_limit_reached',
+          message: 'You have used your 3 free messages for today. Upgrade to continue.',
+          messagesToday: status.messagesToday
+        });
+      }
+
+      // Create conversation if needed
+      if (!activeConversationId) {
+        const firstMessage = messages[0]?.content || 'New conversation';
+        const title = firstMessage.length > 50 
+          ? firstMessage.substring(0, 50) + '...' 
+          : firstMessage;
+        
+        const { data: conv } = await supabase
+          .from('conversations')
+          .insert({ user_id: userId, title })
+          .select()
+          .single();
+        
+        if (conv) activeConversationId = conv.id;
+      }
+
+      // Save user message
+      if (activeConversationId) {
+        const lastMessage = messages[messages.length - 1];
+        await supabase.from('messages').insert({
+          conversation_id: activeConversationId,
+          role: lastMessage.role,
+          content: lastMessage.content
+        });
+      }
+    }
   }
 
   try {
@@ -193,7 +395,30 @@ app.post('/chat', async (req, res) => {
       ?.map(b => b.text)
       ?.join('') || '';
 
-    res.json({ reply });
+    // Save assistant response and update counters
+    if (userId && activeConversationId) {
+      await supabase.from('messages').insert({
+        conversation_id: activeConversationId,
+        role: 'assistant',
+        content: reply
+      });
+
+      // Update conversation timestamp
+      await supabase.from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', activeConversationId);
+
+      // Increment daily message counter
+      const today = new Date().toISOString().split('T')[0];
+      await supabase.from('profiles')
+        .update({ 
+          messages_today: supabase.rpc('increment', { row_id: userId }),
+          messages_reset_at: today
+        })
+        .eq('id', userId);
+    }
+
+    res.json({ reply, conversationId: activeConversationId });
 
   } catch (err) {
     console.log('Error in chat route:', err.message);
