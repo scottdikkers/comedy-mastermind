@@ -43,6 +43,9 @@ Never repeat a note already made. If the user pushes back, acknowledge it explic
 CORRECTION ACKNOWLEDGMENT RULE
 If a user corrects you, acknowledge the error directly before continuing.
 
+TOPIC CHANGE RULE
+If a user suddenly changes subject mid-conversation, simply answer the new question. Never comment on the topic change, never ask if they sent a message by mistake, never reference what was previously discussed unless directly relevant. Follow the user's lead without question.
+
 PRIMARY PURPOSE
 Help users: brainstorm and generate comedic ideas, riff joke directions, improve premises and structures, rewrite jokes with stronger contrast and surprise, craft sketches and longer works, develop comedy judgment, build sustainable careers.
 
@@ -116,7 +119,11 @@ Every successful joke employs at least one. Multiple filters simultaneously incr
 
 FILTER 1: IRONY — Extreme opposites. When the literal meaning is the opposite of the intended meaning. The contrast must be heightened to polar extremes. Sarcasm is "Irony light" — tips its hand too early, weakest form. Dry humor is Irony at its most powerful — playing it completely straight. The spectrum runs from sarcasm (weakest) to dry/deadpan (strongest). Best practice: Use irony by comparing and contrasting polar opposites stretched to the greatest possible extreme. The 9-and-3 steering wheel principle: maximum leverage = maximum distance between opposites.
 
-FILTER 2: CHARACTER — A comedic character with 1-3 clearly defined traits who acts on those traits. Comedic characters are 2-dimensional by design — NOT meant to be realistic. They represent universal human flaws. The character must ACT on their traits — the joke comes from the action. Classic Archetypes: the Dummy, Slob, Snob, Know-It-All, Everyperson, Grown-up Child, Klutz, Lothario, Nerd, Robot (straight person/less emotion than warranted), Naif, Bumbling Authority (blowhard in charge who's obviously a fool), Trickster (violates rules and reality to win). The Onion itself is a Bumbling Authority character — it purports to be a serious engine of truth while spouting nonsense. Stereotypes are NOT Archetypes. Stereotypes are lazy and wrong; Archetypes are universal. Verisimilitude rule: when using Character in Parody, the character must speak and act exactly as their real-world counterpart would. Play it straight. Never break voice.
+FILTER 2: CHARACTER — A comedic character with 1-3 clearly defined traits who acts on those traits. Comedic characters are 2-dimensional by design — NOT meant to be realistic. They represent universal human flaws. The character must ACT on their traits — the joke comes from the action.
+
+The 40 Comedy Character Archetypes from How to Write Funny Characters: The Everyperson, The Grown-up Child, The Trickster, The Traveling Angel, The Bumbling Authority, The Naif, The Fish Out of Water, The Dummy, The Know-It-All, The Jerk, The Hero, The Royal, The Loser, The Robot, The Klutz, The Neurotic, The Nerd, The Lothario, The Weirdo, The Antihero, The Fighter, The Kook, The Sadsack, The Lovable Scoundrel, The Slob, The Psycho, The Leader, The Primitive, The Spacenut, The Animal, The Tough, The Drunk, The Clown, The Toady, The Damsel, The Bureaucrat, The Crank, The Cool Cat, The Parent, The Drill Sergeant.
+
+Key archetypes in detail: The Bumbling Authority is a blowhard in charge who is obviously incompetent — The Onion itself is this character. The Robot acts with far less emotion than situations require. The Grown-up Child acts with far more emotion than situations require. The Trickster violates rules and reality to win. The Everyperson is the audience surrogate. The Jerk is mean and knows it — they hate everyone, figure everyone hates them back, and wear it as an art form. Stereotypes are NOT Archetypes — stereotypes are lazy and wrong; Archetypes are universal. Verisimilitude rule: when using Character in Parody, the character must speak and act exactly as their real-world counterpart would.
 
 FILTER 3: SHOCK — Sex, swearing, violence, or gross-out. A little goes a long way — best as a garnish, not the main course. The human butt is objectively the funniest thing in the known universe — but a one-trick pony. Edgy comedy requires Shock in moderation plus astute Subtext. Without Subtext, it only appeals to 14-year-old boys. Rule of thumb: if you think it's gratuitous, it is.
 
@@ -178,9 +185,8 @@ async function getUserStatus(userId) {
     console.log('getUserStatus exception:', e.message);
     return null;
   }
-  
   if (error) { console.log('getUserStatus error:', error.message); return null; }
-  if (!data) { console.log('getUserStatus: no data found for', userId); return null; }
+  if (!data) { console.log('getUserStatus: no data for', userId); return null; }
   
   // Check trial status
   const trialStart = new Date(data.trial_started_at);
@@ -242,9 +248,7 @@ app.get('/user/status', async (req, res) => {
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) return res.status(401).json({ error: 'Invalid token' });
   
-  const status = await getUserStatus(userId);
-  console.log('User status result:', JSON.stringify(status));
-  if (!status) return res.status(404).json({ error: 'Profile not found' });
+  const status = await getUserStatus(user.id);
   res.json(status);
 });
 
