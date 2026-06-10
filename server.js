@@ -165,11 +165,19 @@ You are supportive. You are demanding. You are on their side. And you actually r
 
 // Helper: get user subscription status
 async function getUserStatus(userId) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  console.log('getUserStatus called for:', userId);
+  let data, error;
+  try {
+    const result = await Promise.race([
+      supabase.from('profiles').select('*').eq('id', userId).single(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 5000))
+    ]);
+    data = result.data;
+    error = result.error;
+  } catch (e) {
+    console.log('getUserStatus exception:', e.message);
+    return null;
+  }
   
   if (error) { console.log('getUserStatus error:', error.message); return null; }
   if (!data) { console.log('getUserStatus: no data found for', userId); return null; }
