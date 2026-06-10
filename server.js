@@ -242,16 +242,26 @@ app.post('/auth/signout', async (req, res) => {
 
 // Get user status
 app.get('/user/status', async (req, res) => {
-  console.log('user/status called');
   const token = req.headers.authorization?.replace('Bearer ', '');
-  console.log('token present:', !!token);
   if (!token) return res.status(401).json({ error: 'No token' });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const status = await getUserStatus(user.id);
-  res.json(status);
+
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+
+    const { data: { user }, error } = authResult;
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+
+    const status = await getUserStatus(user.id);
+    console.log('User status result:', JSON.stringify(status));
+    if (!status) return res.status(404).json({ error: 'Profile not found' });
+    res.json(status);
+  } catch (e) {
+    console.log('user/status error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Get conversations
