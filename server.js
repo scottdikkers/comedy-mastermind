@@ -171,7 +171,8 @@ async function getUserStatus(userId) {
     .eq('id', userId)
     .single();
   
-  if (error || !data) return null;
+  if (error) { console.log('getUserStatus error:', error.message); return null; }
+  if (!data) { console.log('getUserStatus: no data found for', userId); return null; }
   
   // Check trial status
   const trialStart = new Date(data.trial_started_at);
@@ -233,7 +234,9 @@ app.get('/user/status', async (req, res) => {
   const { data: { user }, error } = await supabase.auth.getUser(token);
   if (error || !user) return res.status(401).json({ error: 'Invalid token' });
   
-  const status = await getUserStatus(user.id);
+  const status = await getUserStatus(userId);
+  console.log('User status result:', JSON.stringify(status));
+  if (!status) return res.status(404).json({ error: 'Profile not found' });
   res.json(status);
 });
 
