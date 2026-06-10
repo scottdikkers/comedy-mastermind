@@ -242,7 +242,9 @@ app.post('/auth/signout', async (req, res) => {
 
 // Get user status
 app.get('/user/status', async (req, res) => {
+  console.log('user/status called');
   const token = req.headers.authorization?.replace('Bearer ', '');
+  console.log('token present:', !!token);
   if (!token) return res.status(401).json({ error: 'No token' });
   
   const { data: { user }, error } = await supabase.auth.getUser(token);
