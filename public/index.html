@@ -1499,9 +1499,7 @@ async function sendMessage() {
     clearTimeout(timeout);
 abortController = null;
  
-    const data = await res.json();
- 
-    const data = await res.json();
+      const data = await res.json();
 
     if (res.status === 403 && data.error === 'daily_limit_reached') {
       const tr = document.getElementById('typing-row');
