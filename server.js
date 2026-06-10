@@ -16,6 +16,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseAdmin = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 const TRIAL_DAYS = 7;
 const FREE_DAILY_MESSAGES = 3;
@@ -176,7 +177,7 @@ async function getUserStatus(userId) {
   let data, error;
   try {
     const result = await Promise.race([
-      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabaseAdmin.from('profiles').select('*').eq('id', userId).single(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 5000))
     ]);
     data = result.data;
@@ -199,7 +200,7 @@ async function getUserStatus(userId) {
   let messagesToday = data.messages_today;
   if (data.messages_reset_at !== today) {
     // Reset daily counter
-    await supabase.from('profiles').update({ 
+    await supabaseAdmin.from('profiles').update({ 
       messages_today: 0, 
       messages_reset_at: today 
     }).eq('id', userId);
@@ -389,7 +390,7 @@ app.post('/chat', async (req, res) => {
       // Save user message
       if (activeConversationId) {
         const lastMessage = messages[messages.length - 1];
-        await supabase.from('messages').insert({
+        await supabaseAdmin.from('messages').insert({
           conversation_id: activeConversationId,
           role: lastMessage.role,
           content: lastMessage.content
@@ -432,20 +433,20 @@ app.post('/chat', async (req, res) => {
 
     // Save assistant response and update counters
     if (userId && activeConversationId) {
-      await supabase.from('messages').insert({
+      await supabaseAdmin.from('messages').insert({
         conversation_id: activeConversationId,
         role: 'assistant',
         content: reply
       });
 
       // Update conversation timestamp
-      await supabase.from('conversations')
+      await supabaseAdmin.from('conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', activeConversationId);
 
       // Increment daily message counter
       const today = new Date().toISOString().split('T')[0];
-      await supabase.from('profiles')
+      await supabaseAdmin.from('profiles')
         .update({ 
           messages_today: supabase.rpc('increment', { row_id: userId }),
           messages_reset_at: today
