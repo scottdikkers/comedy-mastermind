@@ -351,9 +351,14 @@ app.post('/chat', async (req, res) => {
 
   // Authenticate if token provided
   if (token) {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (!error && user) {
-      userId = user.id;
+    try {
+      const authResult = await Promise.race([
+        supabase.auth.getUser(token),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 4000))
+      ]);
+      const { data: { user }, error } = authResult;
+      if (!error && user) {
+        userId = user.id;
       
       // Check if user can chat
       const status = await getUserStatus(userId);
@@ -390,6 +395,9 @@ app.post('/chat', async (req, res) => {
           content: lastMessage.content
         });
       }
+      }
+    } catch(authErr) {
+      console.log('Chat auth error:', authErr.message);
     }
   }
 
