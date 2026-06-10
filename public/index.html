@@ -35,6 +35,176 @@
     height: 100vh;
     position: relative;
   }
+
+/* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed;
+    inset: 0;
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    padding: 24px;
+  }
+
+  .auth-card {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 36px 28px;
+    max-width: 380px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .auth-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f0ece4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .auth-sub {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    max-width: 280px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    width: 100%;
+    background: #0d0d0d;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: #555;
+  }
+
+  .auth-tab.active {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .auth-input {
+    width: 100%;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: #f0ece4;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .auth-input:focus { border-color: var(--red); }
+  .auth-input::placeholder { color: #444; }
+
+  .auth-btn {
+    width: 100%;
+    background: var(--red);
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .auth-btn:hover { opacity: 0.9; }
+  .auth-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .auth-error {
+    font-size: 13px;
+    color: var(--red);
+    line-height: 1.5;
+    display: none;
+  }
+
+  .auth-note {
+    font-size: 12px;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  .trial-banner {
+    background: #1a1a0a;
+    border-bottom: 1px solid #333;
+    padding: 8px 20px;
+    font-size: 12px;
+    color: #aaa;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .trial-banner span { color: var(--red); font-weight: 600; }
+
+  .paywall-msg {
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 12px 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .paywall-msg h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0ece4;
+  }
+
+  .paywall-msg p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .paywall-upgrade-btn {
+    background: var(--red);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
  
   /* ── KEY SCREEN ── */
   #key-screen {
@@ -716,6 +886,32 @@
 </style>
 </head>
 <body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:none;">
+  <div class="auth-card">
+    <div class="auth-badge">
+      <svg viewBox="0 0 200 200" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#e93626"/>
+        <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
+        <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
+      </svg>
+    </div>
+    <div class="auth-title">Comedy Mastermind</div>
+    <div id="auth-sub-signin" class="auth-sub">Welcome back. Sign in to continue.</div>
+    <div id="auth-sub-signup" class="auth-sub" style="display:none">Start your 7-day free trial. No credit card required.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+    </div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email address" autocomplete="email"/>
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password" autocomplete="current-password"/>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-btn" id="auth-submit" onclick="handleAuth()">Sign In</button>
+    <div class="auth-note" id="auth-note-forgot" style="cursor:pointer;color:#555;" onclick="handleForgotPassword()">Forgot password?</div>
+    <div class="auth-note" id="auth-note-terms" style="display:none">By creating an account you agree to our Terms of Use and Privacy Policy.</div>
+  </div>
+</div>
  
 <!-- KEY SCREEN (testing only) -->
 <div id="key-screen">
@@ -767,9 +963,8 @@
       <button class="menu-item" onclick="newConversation();toggleMenu()">
         <span class="menu-icon">✏️</span> New Conversation
       </button>
-      <button class="menu-item" style="opacity:0.4;cursor:default">
+      <button class="menu-item" id="menu-history-btn" onclick="openScreen('screen-history');toggleMenu()">
         <span class="menu-icon">🕐</span> Conversation History
-        <span style="font-size:11px;color:#555;margin-left:auto">Soon</span>
       </button>
     </div>
  
@@ -794,6 +989,13 @@
       </button>
     </div>
  
+    <div class="menu-section">
+      <div id="menu-user-email" style="padding:10px 24px;font-size:12px;color:#444;"></div>
+      <button class="menu-item" onclick="handleSignOut()" style="color:#e93626;">
+        <span class="menu-icon">🚪</span> Sign Out
+      </button>
+    </div>
+
     <div class="menu-section">
       <button class="menu-item" style="font-size:13px;color:#444" onclick="toggleMenu()">
         <span class="menu-icon">📄</span> Privacy Policy
@@ -827,7 +1029,12 @@
     </div>
     <div class="header-spacer"></div>
   </div>
- 
+
+  <!-- Trial/status banner -->
+  <div class="trial-banner" id="trial-banner" style="display:none">
+    <span id="trial-text"></span>
+  </div>
+
   <div id="messages"></div>
  
   <div class="input-wrap">
@@ -945,6 +1152,10 @@ const AVATAR_SVG = `<svg viewBox="0 0 200 200" width="30" height="30" xmlns="htt
 let history = [];
 let loading = false;
 let abortController = null;
+let userToken = null;
+let userEmail = null;
+let currentConversationId = null;
+let authMode = 'signin';
 
  function stopGeneration() {
   if (abortController) {
@@ -973,17 +1184,179 @@ function setSendBtn(isLoading) {
     btn.disabled = !input.value.trim();
   }
 }
- 
-// Key screen — no longer needed, auto-start
+function switchTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-signin').className = 'auth-tab' + (mode === 'signin' ? ' active' : '');
+  document.getElementById('tab-signup').className = 'auth-tab' + (mode === 'signup' ? ' active' : '');
+  document.getElementById('auth-submit').textContent = mode === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-sub-signin').style.display = mode === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-sub-signup').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-note-forgot').style.display = mode === 'signin' ? 'block' : 'none';
+  document.getElementById('auth-note-terms').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+  if (!email || !password) {
+    errEl.textContent = 'Please enter your email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = authMode === 'signin' ? 'Signing in...' : 'Creating account...';
+  errEl.style.display = 'none';
+  try {
+    const endpoint = authMode === 'signin' ? '/auth/signin' : '/auth/signup';
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Something went wrong. Please try again.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+      return;
+    }
+    userToken = data.session?.access_token;
+    userEmail = data.user?.email;
+    localStorage.setItem('cm_token', userToken);
+    localStorage.setItem('cm_email', userEmail);
+    document.getElementById('auth-screen').style.display = 'none';
+    await initUserSession();
+    showSplash();
+  } catch (err) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  }
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('auth-email').value.trim();
+  const errEl = document.getElementById('auth-error');
+  if (!email) {
+    errEl.textContent = 'Please enter your email address first.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.color = '#4caf50';
+  errEl.textContent = 'If that email exists, a reset link has been sent.';
+  errEl.style.display = 'block';
+}
+
+async function handleSignOut() {
+  try {
+    await fetch('/auth/signout', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+  } catch(e) {}
+  userToken = null;
+  userEmail = null;
+  currentConversationId = null;
+  history = [];
+  localStorage.removeItem('cm_token');
+  localStorage.removeItem('cm_email');
+  toggleMenu();
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+async function initUserSession() {
+  if (!userToken) return;
+  const emailEl = document.getElementById('menu-user-email');
+  if (emailEl && userEmail) emailEl.textContent = userEmail;
+  try {
+    const res = await fetch('/user/status', {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+    if (res.ok) {
+      const status = await res.json();
+      const banner = document.getElementById('trial-banner');
+      const trialText = document.getElementById('trial-text');
+      if (status.trialActive) {
+        const daysLeft = Math.max(0, 7 - status.daysSinceTrial);
+        trialText.innerHTML = `Free trial — <span>${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</span>`;
+        banner.style.display = 'block';
+      } else if (status.subscription_status !== 'active') {
+        trialText.innerHTML = `<span>${status.messagesToday} of 3</span> free messages used today`;
+        banner.style.display = 'block';
+      }
+    }
+  } catch(e) {}
+}
+
+async function loadConversations() {
+  if (!userToken) return;
+  const listEl = document.getElementById('history-list');
+  try {
+    const res = await fetch('/conversations', {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+    const convs = await res.json();
+    if (!Array.isArray(convs) || !convs.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">No conversations yet.</div>';
+      return;
+    }
+    listEl.innerHTML = convs.map(c => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #1c1c1c;cursor:pointer;" onclick="loadConversation('${c.id}')">
+        <div>
+          <div style="font-size:15px;color:#f0ece4;line-height:1.4;">${c.title || 'Untitled'}</div>
+          <div style="font-size:12px;color:#555;margin-top:3px;">${new Date(c.updated_at).toLocaleDateString()}</div>
+        </div>
+        <div style="color:#444;font-size:22px;padding:0 8px;" onclick="event.stopPropagation();deleteConversation('${c.id}')">×</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Could not load conversations.</div>';
+  }
+}
+
+async function loadConversation(convId) {
+  if (!userToken) return;
+  closeScreen('screen-history');
+  try {
+    const res = await fetch(`/conversations/${convId}/messages`, {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+    const msgs = await res.json();
+    history = [];
+    document.getElementById('messages').innerHTML = '';
+    currentConversationId = convId;
+    msgs.forEach(m => {
+      history.push({ role: m.role, content: m.content });
+      addBubble(m.role, m.content);
+    });
+  } catch(e) {}
+}
+
+async function deleteConversation(convId) {
+  if (!userToken) return;
+  try {
+    await fetch(`/conversations/${convId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+    loadConversations();
+  } catch(e) {}
+}
+
 function submitKey() {
   document.getElementById('key-screen').style.display = 'none';
   showSplash();
 }
- 
+
 document.getElementById('key-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitKey();
 });
- 
+
 function showSplash() {
   document.getElementById('splash').style.display = 'flex';
   setTimeout(() => {
@@ -994,11 +1367,20 @@ function showSplash() {
     }, 700);
   }, 2200);
 }
- 
+
 // Auto-start on load
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   document.getElementById('key-screen').style.display = 'none';
-  showSplash();
+  const savedToken = localStorage.getItem('cm_token');
+  const savedEmail = localStorage.getItem('cm_email');
+  if (savedToken) {
+    userToken = savedToken;
+    userEmail = savedEmail;
+    await initUserSession();
+    showSplash();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
 });
  
 // Menu
@@ -1110,7 +1492,7 @@ async function sendMessage() {
     const res = await fetch(`${SERVER_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({ messages: history, token: userToken, conversationId: currentConversationId }),
       signal: abortController.signal
     });
  
@@ -1119,8 +1501,29 @@ abortController = null;
  
     const data = await res.json();
  
+    const data = await res.json();
+
+    if (res.status === 403 && data.error === 'daily_limit_reached') {
+      const tr = document.getElementById('typing-row');
+      if (tr) tr.remove();
+      const el = document.getElementById('messages');
+      const paywall = document.createElement('div');
+      paywall.className = 'paywall-msg';
+      paywall.innerHTML = `
+        <h3>Daily limit reached</h3>
+        <p>You've used your 3 free messages for today. Upgrade to Comedy Mastermind for unlimited access.</p>
+        <button class="paywall-upgrade-btn" onclick="openScreen('screen-subscription')">View Plans</button>
+      `;
+      el.appendChild(paywall);
+      scrollBottom();
+      history.pop();
+      return;
+    }
+
     if (!res.ok) throw new Error(data.error || `API error ${res.status}`);
- 
+
+    if (data.conversationId) currentConversationId = data.conversationId;
+
     const reply = data.reply || "I wasn't able to generate a response. Please try again.";
  
     const tr = document.getElementById('typing-row');
@@ -1164,6 +1567,17 @@ function rateStar(n) {
   });
 }
 </script>
+
+<!-- CONVERSATION HISTORY SCREEN -->
+<div id="screen-history" class="inner-screen">
+  <div class="inner-header">
+    <button class="back-btn" onclick="closeScreen('screen-history')">← Back</button>
+    <div class="inner-title">History</div>
+  </div>
+  <div class="inner-body" id="history-list">
+    <div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Loading conversations...</div>
+  </div>
+</div>
  
 <!-- SUBSCRIPTION SCREEN -->
 <div id="screen-subscription" class="inner-screen">
@@ -1330,4 +1744,3 @@ function rateStar(n) {
 </div>
 </body>
 </html>
-
