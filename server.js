@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
-  httpAgent: null,
-  timeout: 20000
+  timeout: 30000,
+  maxNetworkRetries: 0
 });
 
 app.get('/test-stripe', async (req, res) => {
