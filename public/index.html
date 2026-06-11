@@ -1282,7 +1282,18 @@ async function initUserSession() {
         if (status.subscription_status === 'active') {
           settingsPlan.textContent = status.subscription_tier === 'lifetime' ? 'Lifetime' :
                                       status.subscription_tier === 'annual' ? 'Annual' : 'Monthly';
-          if (settingsRenewalRow) settingsRenewalRow.style.display = status.subscription_tier === 'lifetime' ? 'none' : 'flex';
+          if (settingsRenewalRow) {
+            if (status.subscription_tier === 'lifetime') {
+              settingsRenewalRow.style.display = 'none';
+            } else {
+              settingsRenewalRow.style.display = 'flex';
+              const startDate = new Date(status.subscription_started_at || Date.now());
+              const renewal = new Date(startDate);
+              if (status.subscription_tier === 'monthly') renewal.setMonth(renewal.getMonth() + 1);
+              else renewal.setFullYear(renewal.getFullYear() + 1);
+              document.getElementById('settings-renewal').textContent = renewal.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+            }
+          }
         } else if (status.trialActive) {
           settingsPlan.textContent = `Free Trial (${Math.max(0, 7 - status.daysSinceTrial)} days left)`;
           if (settingsRenewalRow) settingsRenewalRow.style.display = 'none';
