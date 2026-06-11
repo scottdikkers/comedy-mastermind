@@ -463,6 +463,86 @@ app.post('/chat', async (req, res) => {
   }
 });
 
+// Stripe checkout
+app.post('/create-checkout', async (req, res) => {
+  const { tier, token } = req.body;
+  
+  const priceMap = {
+    monthly: process.env.STRIPE_PRICE_MONTHLY,
+    annual: process.env.STRIPE_PRICE_ANNUAL,
+    lifetime: process.env.STRIPE_PRICE_LIFETIME
+  };
+
+  const priceId = priceMap[tier];
+  if (!priceId) return res.status(400).json({ error: 'Invalid tier' });
+
+  let userId = null;
+  let customerEmail = null;
+
+  if (token) {
+    try {
+      const authResult = await Promise.race([
+        supabase.auth.getUser(token),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+      ]);
+      const { data: { user } } = authResult;
+      if (user) {
+        userId = user.id;
+        customerEmail = user.email;
+      }
+    } catch(e) {}
+  }
+
+  try {
+    const sessionConfig = {
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: tier === 'lifetime' ? 'payment' : 'subscription',
+      success_url: `https://comedymastermind.com?session_id={CHECKOUT_SESSION_ID}&upgrade=success`,
+      cancel_url: `https://comedymastermind.com`,
+      metadata: { userId: userId || '' }
+    };
+
+    if (customerEmail) sessionConfig.customer_email = customerEmail;
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.log('Stripe error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Stripe webhook
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+  } catch (err) {
+    console.log('Webhook error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userId = session.metadata?.userId;
+    if (userId) {
+      const tier = session.mode === 'payment' ? 'lifetime' : 
+                   session.amount_total === 2999 ? 'monthly' : 'annual';
+      await supabaseAdmin.from('profiles').update({
+        subscription_status: 'active',
+        subscription_tier: tier
+      }).eq('id', userId);
+      console.log(`Upgraded user ${userId} to ${tier}`);
+    }
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', (req, res) => {
