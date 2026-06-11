@@ -528,14 +528,13 @@ app.post('/create-checkout', async (req, res) => {
 });
 
 // Stripe webhook
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhook', express.json(), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  const payload = req.body.toString();
 
   let event;
   try {
-    event = JSON.parse(payload);
+    event = req.body;
     console.log('Webhook received, event type:', event.type);
   } catch (err) {
     console.log('Webhook parse error:', err.message);
