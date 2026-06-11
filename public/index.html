@@ -1281,11 +1281,13 @@ async function initUserSession() {
       const status = await res.json();
       const banner = document.getElementById('trial-banner');
       const trialText = document.getElementById('trial-text');
-      if (status.trialActive) {
+      if (status.subscription_status === 'active') {
+        banner.style.display = 'none';
+      } else if (status.trialActive) {
         const daysLeft = Math.max(0, 7 - status.daysSinceTrial);
         trialText.innerHTML = `Free trial — <span>${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</span>`;
         banner.style.display = 'block';
-      } else if (status.subscription_status !== 'active') {
+      } else {
         trialText.innerHTML = `<span>${status.messagesToday} of 3</span> free messages used today`;
         banner.style.display = 'block';
       }
