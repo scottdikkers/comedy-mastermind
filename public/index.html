@@ -1272,6 +1272,25 @@ async function initUserSession() {
         trialText.innerHTML = `<span>${status.messagesToday} of 3</span> free messages used today`;
         banner.style.display = 'block';
       }
+
+      // Update account settings screen
+      const settingsEmail = document.getElementById('settings-email');
+      const settingsPlan = document.getElementById('settings-plan');
+      const settingsRenewalRow = document.getElementById('settings-renewal-row');
+      if (settingsEmail) settingsEmail.textContent = userEmail || '—';
+      if (settingsPlan && status) {
+        if (status.subscription_status === 'active') {
+          settingsPlan.textContent = status.subscription_tier === 'lifetime' ? 'Lifetime' :
+                                      status.subscription_tier === 'annual' ? 'Annual' : 'Monthly';
+          if (settingsRenewalRow) settingsRenewalRow.style.display = status.subscription_tier === 'lifetime' ? 'none' : 'flex';
+        } else if (status.trialActive) {
+          settingsPlan.textContent = `Free Trial (${Math.max(0, 7 - status.daysSinceTrial)} days left)`;
+          if (settingsRenewalRow) settingsRenewalRow.style.display = 'none';
+        } else {
+          settingsPlan.textContent = 'Free (3 messages/day)';
+          if (settingsRenewalRow) settingsRenewalRow.style.display = 'none';
+        }
+      }
     }
   } catch(e) {}
 }
@@ -1713,24 +1732,19 @@ function rateStar(n) {
   <div class="inner-body">
     <div class="settings-row">
       <div class="settings-label">Email</div>
-      <div class="settings-value">scott@example.com</div>
+      <div class="settings-value" id="settings-email">—</div>
     </div>
     <div class="settings-row">
       <div class="settings-label">Plan</div>
-      <div class="settings-value" style="color:var(--red)">Annual</div>
+      <div class="settings-value" id="settings-plan" style="color:var(--red)">—</div>
     </div>
-    <div class="settings-row">
+    <div class="settings-row" id="settings-renewal-row">
       <div class="settings-label">Next renewal</div>
-      <div class="settings-value">March 3, 2027</div>
-    </div>
-    <div class="settings-row">
-      <div class="settings-label">Text size</div>
-      <div class="settings-value">Default</div>
+      <div class="settings-value" id="settings-renewal">—</div>
     </div>
     <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
-      <button class="plan-btn outline" style="width:100%">Change Password</button>
-      <button class="plan-btn outline" style="width:100%;color:#e93626;border-color:#e93626">Cancel Subscription</button>
-      <button class="plan-btn outline" style="width:100%;color:#555">Sign Out</button>
+      <button class="plan-btn outline" style="width:100%" onclick="openScreen('screen-subscription')">Manage Subscription</button>
+      <button class="plan-btn outline" style="width:100%;color:#e93626;border-color:#e93626" onclick="handleSignOut()">Sign Out</button>
     </div>
   </div>
 </div>
