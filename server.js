@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
+  httpAgent: null,
+  timeout: 20000
+});
 
 const app = express();
 app.use(cors({ origin: '*' }));
