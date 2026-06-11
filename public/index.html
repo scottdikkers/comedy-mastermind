@@ -1549,7 +1549,22 @@ abortController = null;
 }
  
 // Inner screens
-function openScreen(id) {
+async function startCheckout(tier) {
+  try {
+    const res = await fetch('/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier, token: userToken })
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert('Could not start checkout. Please try again.');
+  } catch(e) {
+    alert('Connection error. Please try again.');
+  }
+}
+ 
+ function openScreen(id) {
   toggleMenu();
   document.getElementById(id).classList.add('open');
   if (id === 'screen-history') loadConversations();
@@ -1596,21 +1611,21 @@ function rateStar(n) {
       <div class="plan-name">Annual</div>
       <div class="plan-price">$199 <span>/ year</span></div>
       <div class="plan-desc">Save 43% vs monthly. Less than $17/month.</div>
-      <button class="plan-btn">Get Annual Access</button>
+      <button class="plan-btn" onclick="startCheckout('annual')">Get Annual Access</button>
     </div>
  
     <div class="plan-card">
       <div class="plan-name">Monthly</div>
       <div class="plan-price">$29 <span>/ month</span></div>
       <div class="plan-desc">Full access, cancel anytime.</div>
-      <button class="plan-btn outline">Get Monthly Access</button>
+      <button class="plan-btn outline" onclick="startCheckout('monthly')">Get Monthly Access</button>
     </div>
  
     <div class="plan-card">
       <div class="plan-name">Lifetime</div>
       <div class="plan-price">$499 <span>one-time</span></div>
       <div class="plan-desc">Pay once, use forever. Best long-term value.</div>
-      <button class="plan-btn outline">Get Lifetime Access</button>
+      <button class="plan-btn outline" onclick="startCheckout('lifetime')">Get Lifetime Access</button>
     </div>
  
     <div class="sub-note">All plans include full access to Comedy Mastermind's AI coaching, powered by Scott Dikkers' complete body of work. Cancel monthly or annual plans anytime.</div>
