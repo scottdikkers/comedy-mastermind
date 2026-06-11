@@ -459,6 +459,7 @@ app.post('/chat', async (req, res) => {
 
   } catch (err) {
     console.log('Error in chat route:', err.message);
+    console.log('Stripe error full:', err.message, err.type, err.code);
     res.status(500).json({ error: err.message });
   }
 });
