@@ -556,7 +556,9 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  console.log('Webhook event type:', event.type);
   if (event.type === 'checkout.session.completed') {
+    console.log('Checkout completed, userId:', event.data?.object?.metadata?.userId);
     const session = event.data.object;
     const userId = session.metadata?.userId;
     if (userId) {
