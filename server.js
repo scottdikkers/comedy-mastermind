@@ -6,6 +6,15 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
   timeout: 20000
 });
 
+app.get('/test-stripe', async (req, res) => {
+  try {
+    const products = await stripe.products.list({ limit: 1 });
+    res.json({ success: true, count: products.data.length });
+  } catch(e) {
+    res.json({ success: false, error: e.message, type: e.type });
+  }
+});
+
 const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
