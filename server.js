@@ -548,10 +548,11 @@ app.post('/webhook', express.json(), async (req, res) => {
     const userId = session.metadata?.userId;
     if (userId) {
       const tier = session.mode === 'payment' ? 'lifetime' : 
-                   session.amount_total === 2999 ? 'monthly' : 'annual';
+                   session.amount_total === 2900 ? 'monthly' : 'annual';
       await supabaseAdmin.from('profiles').update({
         subscription_status: 'active',
-        subscription_tier: tier
+        subscription_tier: tier,
+        subscription_started_at: new Date().toISOString()
       }).eq('id', userId);
       console.log(`Upgraded user ${userId} to ${tier}`);
     }
