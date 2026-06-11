@@ -496,6 +496,14 @@ app.post('/create-checkout', async (req, res) => {
   }
 
   try {
+    // Test raw connectivity first
+    const testRes = await fetch('https://api.stripe.com/v1/charges', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+    });
+    console.log('Raw Stripe connectivity test:', testRes.status);
+    
+    try {
     const sessionConfig = {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
