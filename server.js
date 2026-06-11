@@ -496,18 +496,30 @@ app.post('/create-checkout', async (req, res) => {
   }
     
     try {
-    const sessionConfig = {
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: tier === 'lifetime' ? 'payment' : 'subscription',
-      success_url: `https://comedymastermind.com?session_id={CHECKOUT_SESSION_ID}&upgrade=success`,
-      cancel_url: `https://comedymastermind.com`,
-      metadata: { userId: userId || '' }
-    };
+    const mode = tier === 'lifetime' ? 'payment' : 'subscription';
+    const body = new URLSearchParams({
+      'payment_method_types[]': 'card',
+      'line_items[0][price]': priceId,
+      'line_items[0][quantity]': '1',
+      'mode': mode,
+      'success_url': 'https://comedymastermind.com?upgrade=success',
+      'cancel_url': 'https://comedymastermind.com'
+    });
+    if (userId) body.append('metadata[userId]', userId);
+    if (customerEmail) body.append('customer_email', customerEmail);
 
-    if (customerEmail) sessionConfig.customer_email = customerEmail;
+    const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    });
 
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    const session = await stripeRes.json();
+    console.log('Stripe response status:', stripeRes.status, 'session id:', session.id);
+    if (!stripeRes.ok) throw new Error(session.error?.message || 'Stripe error');
     res.json({ url: session.url });
   } catch (err) {
     console.log('Stripe error:', err.message);
