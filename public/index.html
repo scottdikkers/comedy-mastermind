@@ -1306,7 +1306,7 @@ async function loadConversations() {
       return;
     }
     listEl.innerHTML = convs.map(c => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0 2px;border-bottom:1px solid #1c1c1c;cursor:pointer;" onclick="loadConversation('${c.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #1c1c1c;cursor:pointer;" onclick="loadConversation('${c.id}')">
         <div>
           <div style="font-size:15px;color:#f0ece4;line-height:1.4;">${c.title || 'Untitled'}</div>
           <div style="font-size:12px;color:#555;margin-top:3px;">${new Date(c.updated_at).toLocaleDateString()}</div>
@@ -1573,7 +1573,7 @@ function rateStar(n) {
     <button class="back-btn" onclick="closeScreen('screen-history')">← Back</button>
     <div class="inner-title">History</div>
   </div>
-  <div class="inner-body" id="history-list">
+  <div class="inner-body" id="history-list" style="gap:0;padding:16px 20px;">
     <div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Loading conversations...</div>
   </div>
 </div>
