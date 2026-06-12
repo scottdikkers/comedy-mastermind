@@ -1659,7 +1659,7 @@ async function startCheckout(tier) {
       annualCard.classList.remove('featured');
       annualCard.style.opacity = '0.4';
       annualCard.style.pointerEvents = 'none';
-      annualCard.querySelector('.plan-badge').textContent = 'Current Plan';
+      annualCard.querySelector('.plan-badge').remove();
       annualCard.querySelector('.plan-btn').textContent = 'Current Plan';
       annualCard.querySelector('.plan-btn').classList.add('outline');
       annualCard.querySelector('.plan-btn').onclick = null;
