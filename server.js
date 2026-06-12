@@ -541,7 +541,6 @@ app.post('/webhook', express.json(), async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log('Webhook event type:', event.type);
   if (event.type === 'checkout.session.completed') {
     console.log('Checkout completed, userId:', event.data?.object?.metadata?.userId);
     const session = event.data.object;
@@ -552,13 +551,75 @@ app.post('/webhook', express.json(), async (req, res) => {
       await supabaseAdmin.from('profiles').update({
         subscription_status: 'active',
         subscription_tier: tier,
-        subscription_started_at: new Date().toISOString()
+        subscription_started_at: new Date().toISOString(),
+        stripe_customer_id: session.customer || null,
+        stripe_subscription_id: session.subscription || null
       }).eq('id', userId);
       console.log(`Upgraded user ${userId} to ${tier}`);
     }
   }
 
+  if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object;
+    const customerId = invoice.customer;
+    console.log('Payment failed for customer:', customerId);
+    if (customerId) {
+      const { data } = await supabaseAdmin.from('profiles')
+        .select('id')
+        .eq('stripe_customer_id', customerId)
+        .single();
+      if (data) {
+        await supabaseAdmin.from('profiles').update({
+          subscription_status: 'payment_failed'
+        }).eq('id', data.id);
+        console.log(`Payment failed — downgraded user ${data.id}`);
+      }
+    }
+  }
+
   res.json({ received: true });
+});
+
+// Stripe customer portal
+app.post('/create-portal', async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    const { data: { user } } = authResult;
+    if (!user) return res.status(401).json({ error: 'Invalid token' });
+
+    const { data: profile } = await supabaseAdmin.from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_customer_id) {
+      return res.status(400).json({ error: 'No Stripe customer found' });
+    }
+
+    const session = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        customer: profile.stripe_customer_id,
+        return_url: 'https://comedymastermind.com'
+      }).toString()
+    });
+
+    const portalSession = await session.json();
+    if (!session.ok) throw new Error(portalSession.error?.message || 'Portal error');
+    res.json({ url: portalSession.url });
+  } catch(e) {
+    console.log('Portal error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.use(express.static(__dirname + '/public'));
