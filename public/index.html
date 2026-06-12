@@ -1273,6 +1273,14 @@ async function initUserSession() {
         banner.style.display = 'block';
       }
 
+     // Payment failed banner
+      if (status.subscription_status === 'payment_failed') {
+        trialText.innerHTML = `⚠️ <span>Payment failed</span> — update your payment method to restore access.`;
+        banner.style.display = 'block';
+        banner.style.cursor = 'pointer';
+        banner.onclick = () => openPortal();
+      }
+
       // Update account settings screen
       const settingsEmail = document.getElementById('settings-email');
       const settingsPlan = document.getElementById('settings-plan');
@@ -1602,6 +1610,90 @@ async function startCheckout(tier) {
   toggleMenu();
   document.getElementById(id).classList.add('open');
   if (id === 'screen-history') loadConversations();
+  if (id === 'screen-subscription') updateSubscriptionScreen();
+}
+
+ async function updateSubscriptionScreen() {
+  if (!userToken) return;
+  try {
+    const res = await fetch('/user/status', {
+      headers: { 'Authorization': `Bearer ${userToken}` }
+    });
+    if (!res.ok) return;
+    const status = await res.json();
+    const tier = status.subscription_tier;
+    const isActive = status.subscription_status === 'active';
+    const paymentFailed = status.subscription_status === 'payment_failed';
+
+    const intro = document.getElementById('sub-intro');
+    const annualCard = document.getElementById('sub-annual');
+    const monthlyCard = document.getElementById('sub-monthly');
+    const lifetimeCard = document.getElementById('sub-lifetime');
+    const lifetimeScreen = document.getElementById('sub-lifetime-screen');
+    const subNote = document.getElementById('sub-note');
+
+    if (!intro) return;
+
+    // Payment failed state
+    if (paymentFailed) {
+      intro.innerHTML = '<div style="color:#e93626;font-size:15px;font-weight:600;">⚠️ Your last payment failed.</div><div style="font-size:14px;color:#888;margin-top:6px;">Update your payment method to restore full access.</div>';
+      document.getElementById('sub-portal-btn').style.display = 'block';
+      return;
+    }
+
+    // Lifetime state
+    if (isActive && tier === 'lifetime') {
+      annualCard.style.display = 'none';
+      monthlyCard.style.display = 'none';
+      lifetimeCard.style.display = 'none';
+      subNote.style.display = 'none';
+      lifetimeScreen.style.display = 'block';
+      intro.style.display = 'none';
+      return;
+    }
+
+    // Annual state
+    if (isActive && tier === 'annual') {
+      intro.innerHTML = '<div style="font-size:15px;color:#888;line-height:1.5">You\'re on the Annual plan. Upgrade to lifetime for permanent access.</div>';
+      annualCard.style.opacity = '0.4';
+      annualCard.style.pointerEvents = 'none';
+      annualCard.querySelector('.plan-btn').textContent = 'Current Plan';
+      annualCard.querySelector('.plan-btn').classList.add('outline');
+      monthlyCard.style.opacity = '0.4';
+      monthlyCard.style.pointerEvents = 'none';
+      monthlyCard.querySelector('.plan-btn').textContent = 'Not Available';
+      monthlyCard.querySelector('.plan-btn').classList.add('outline');
+      lifetimeCard.querySelector('.plan-btn').textContent = 'Upgrade to Lifetime';
+      return;
+    }
+
+    // Monthly state
+    if (isActive && tier === 'monthly') {
+      intro.innerHTML = '<div style="font-size:15px;color:#888;line-height:1.5">You\'re on the Monthly plan. Upgrade to save money or get lifetime access.</div>';
+      monthlyCard.style.opacity = '0.4';
+      monthlyCard.style.pointerEvents = 'none';
+      monthlyCard.querySelector('.plan-btn').textContent = 'Current Plan';
+      monthlyCard.querySelector('.plan-btn').classList.add('outline');
+      annualCard.querySelector('.plan-btn').textContent = 'Upgrade to Annual — Save 43%';
+      lifetimeCard.querySelector('.plan-btn').textContent = 'Upgrade to Lifetime';
+      return;
+    }
+
+  } catch(e) {}
+}
+
+async function openPortal() {
+  try {
+    const res = await fetch('/create-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: userToken })
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  } catch(e) {
+    alert('Could not open billing portal. Please contact support@howtowritefunny.com');
+  }
 }
  
 function closeScreen(id) {
@@ -1630,39 +1722,47 @@ function rateStar(n) {
 <!-- SUBSCRIPTION SCREEN -->
 <div id="screen-subscription" class="inner-screen">
   <div class="inner-header">
-    <button class="back-btn" onclick="closeScreen('screen-subscription')">
-      ← Back
-    </button>
+    <button class="back-btn" onclick="closeScreen('screen-subscription')">← Back</button>
     <div class="inner-title">Subscription</div>
   </div>
   <div class="inner-body">
-    <div style="text-align:center;margin-bottom:4px">
+    <div style="text-align:center;margin-bottom:4px" id="sub-intro">
       <div style="font-size:15px;color:#888;line-height:1.5">Unlock full access to Comedy Mastermind — the interactive AI coach for comedy writers, creators, and performers.</div>
     </div>
- 
-    <div class="plan-card featured">
+
+    <button id="sub-portal-btn" class="plan-btn" style="display:none;width:100%;margin-bottom:8px;" onclick="openPortal()">Update Payment Method</button>
+
+    <div class="plan-card featured" id="sub-annual">
       <div class="plan-badge">Best Value</div>
       <div class="plan-name">Annual</div>
       <div class="plan-price">$199 <span>/ year</span></div>
       <div class="plan-desc">Save 43% vs monthly. Less than $17/month.</div>
-      <button class="plan-btn" onclick="startCheckout('annual')">Get Annual Access</button>
+      <button class="plan-btn" style="cursor:pointer;position:relative;z-index:2;" onclick="startCheckout('annual')">Get Annual Access</button>
     </div>
- 
-    <div class="plan-card">
+
+    <div class="plan-card" id="sub-monthly">
       <div class="plan-name">Monthly</div>
       <div class="plan-price">$29 <span>/ month</span></div>
       <div class="plan-desc">Full access, cancel anytime.</div>
-      <button class="plan-btn outline" onclick="startCheckout('monthly')">Get Monthly Access</button>
+      <button class="plan-btn outline" style="cursor:pointer;position:relative;z-index:2;" onclick="startCheckout('monthly')">Get Monthly Access</button>
     </div>
- 
-    <div class="plan-card">
+
+    <div class="plan-card" id="sub-lifetime">
       <div class="plan-name">Lifetime</div>
       <div class="plan-price">$499 <span>one-time</span></div>
       <div class="plan-desc">Pay once, use forever. Best long-term value.</div>
-      <button class="plan-btn outline" onclick="startCheckout('lifetime')">Get Lifetime Access</button>
+      <button class="plan-btn outline" style="cursor:pointer;position:relative;z-index:2;" onclick="startCheckout('lifetime')">Get Lifetime Access</button>
     </div>
- 
-    <div class="sub-note">All plans include full access to Comedy Mastermind. Cancel monthly or annual plans anytime. (Tax included where applicable.)</div>
+
+    <div class="sub-note" id="sub-note">All plans include full access to Comedy Mastermind. Cancel monthly or annual plans anytime. (Tax included where applicable.)</div>
+
+    <!-- Lifetime subscriber screen -->
+    <div id="sub-lifetime-screen" style="display:none;text-align:center;padding:20px 0;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:18px;font-weight:700;color:#f0ece4;">You have lifetime access to Comedy Mastermind.</div>
+      <div style="font-size:14px;color:#888;line-height:1.6;">Want personal coaching from the real Scott Dikkers?</div>
+      <a href="https://go.howtowritefunny.com/mentorship-program" target="_blank" class="plan-btn" style="text-decoration:none;text-align:center;display:block;">Book a Human Coach</a>
+    </div>
+
   </div>
 </div>
  
