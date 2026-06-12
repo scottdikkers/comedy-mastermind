@@ -1647,7 +1647,7 @@ async function startCheckout(tier) {
       monthlyCard.style.display = 'none';
       lifetimeCard.style.display = 'none';
       subNote.style.display = 'none';
-      lifetimeScreen.style.display = 'block';
+      lifetimeScreen.style.display = 'flex';
       intro.style.display = 'none';
       return;
     }
@@ -1655,25 +1655,38 @@ async function startCheckout(tier) {
     // Annual state
     if (isActive && tier === 'annual') {
       intro.innerHTML = '<div style="font-size:15px;color:#888;line-height:1.5">You\'re on the Annual plan. Upgrade to lifetime for permanent access.</div>';
+      // Gray out annual — remove featured styling
+      annualCard.classList.remove('featured');
       annualCard.style.opacity = '0.4';
       annualCard.style.pointerEvents = 'none';
+      annualCard.querySelector('.plan-badge').textContent = 'Current Plan';
       annualCard.querySelector('.plan-btn').textContent = 'Current Plan';
       annualCard.querySelector('.plan-btn').classList.add('outline');
+      annualCard.querySelector('.plan-btn').onclick = null;
+      // Gray out monthly
       monthlyCard.style.opacity = '0.4';
       monthlyCard.style.pointerEvents = 'none';
       monthlyCard.querySelector('.plan-btn').textContent = 'Not Available';
-      monthlyCard.querySelector('.plan-btn').classList.add('outline');
+      // Highlight lifetime
+      lifetimeCard.classList.add('featured');
+      lifetimeCard.querySelector('.plan-badge') && lifetimeCard.querySelector('.plan-badge').remove();
+      const smartBadge = document.createElement('div');
+      smartBadge.className = 'plan-badge';
+      smartBadge.textContent = 'Smart Move';
+      lifetimeCard.insertBefore(smartBadge, lifetimeCard.firstChild);
       lifetimeCard.querySelector('.plan-btn').textContent = 'Upgrade to Lifetime';
+      lifetimeCard.querySelector('.plan-btn').classList.remove('outline');
       return;
     }
 
     // Monthly state
     if (isActive && tier === 'monthly') {
-      intro.innerHTML = '<div style="font-size:15px;color:#888;line-height:1.5">You\'re on the Monthly plan. Upgrade to save money or get lifetime access.</div>';
+      intro.innerHTML = '<div style="font-size:15px;color:#888;line-height:1.5">You\'re on the Monthly plan. Upgrade to get more Mastermind for your money.</div>';
       monthlyCard.style.opacity = '0.4';
       monthlyCard.style.pointerEvents = 'none';
       monthlyCard.querySelector('.plan-btn').textContent = 'Current Plan';
       monthlyCard.querySelector('.plan-btn').classList.add('outline');
+      monthlyCard.querySelector('.plan-btn').onclick = null;
       annualCard.querySelector('.plan-btn').textContent = 'Upgrade to Annual — Save 43%';
       lifetimeCard.querySelector('.plan-btn').textContent = 'Upgrade to Lifetime';
       return;
@@ -1750,16 +1763,16 @@ function rateStar(n) {
     <div class="plan-card" id="sub-lifetime">
       <div class="plan-name">Lifetime</div>
       <div class="plan-price">$499 <span>one-time</span></div>
-      <div class="plan-desc">Pay once, use forever. Best long-term value.</div>
+      <div class="plan-desc">Pay once, use forever. Best long-term investment.</div>
       <button class="plan-btn outline" style="cursor:pointer;position:relative;z-index:2;" onclick="startCheckout('lifetime')">Get Lifetime Access</button>
     </div>
 
     <div class="sub-note" id="sub-note">All plans include full access to Comedy Mastermind. Cancel monthly or annual plans anytime. (Tax included where applicable.)</div>
 
     <!-- Lifetime subscriber screen -->
-    <div id="sub-lifetime-screen" style="display:none;text-align:center;padding:20px 0;display:flex;flex-direction:column;gap:16px;">
-      <div style="font-size:18px;font-weight:700;color:#f0ece4;">You have lifetime access to Comedy Mastermind.</div>
-      <div style="font-size:14px;color:#888;line-height:1.6;">Want personal coaching from the real Scott Dikkers?</div>
+    <div id="sub-lifetime-screen" style="display:none;flex-direction:column;gap:20px;text-align:center;padding:20px 0;">
+      <div style="font-size:18px;font-weight:700;color:#f0ece4;line-height:1.5;">You have lifetime access to Comedy Mastermind.</div>
+      <div style="font-size:14px;color:#888;line-height:1.7;">Want personal coaching from the real Scott Dikkers?</div>
       <a href="https://go.howtowritefunny.com/mentorship-program" target="_blank" class="plan-btn" style="text-decoration:none;text-align:center;display:block;">Book a Human Coach</a>
     </div>
 
