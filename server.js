@@ -45,7 +45,7 @@ async function getRelevantCorpus(query) {
     // Find the 5 most relevant corpus chunks
     const { data, error } = await supabaseAdmin.rpc('match_corpus_chunks', {
       query_embedding: embedding,
-      match_count: 5
+      match_count: 3
     });
 
     if (error) throw new Error(error.message);
@@ -442,8 +442,9 @@ app.post('/chat', async (req, res) => {
     // Retrieve relevant corpus passages
     const lastUserMessage = messages[messages.length - 1]?.content || '';
     const corpusContext = await getRelevantCorpus(lastUserMessage);
-    const systemWithContext = corpusContext 
-      ? `${SYSTEM_PROMPT}\n\n---\nRELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response — do not quote directly, integrate naturally):\n\n${corpusContext}\n---`
+const truncatedContext = corpusContext.slice(0, 3000);
+    const systemWithContext = truncatedContext 
+      ? `${SYSTEM_PROMPT}\n\n---\nRELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response — do not quote directly, integrate naturally):\n\n${truncatedContext}\n---`
       : SYSTEM_PROMPT;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
