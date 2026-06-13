@@ -19,9 +19,43 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const OPENAI_KEY = process.env.OPENAI_KEY;
 
 const TRIAL_DAYS = 7;
 const FREE_DAILY_MESSAGES = 3;
+
+async function getRelevantCorpus(query) {
+  try {
+    // Embed the user's query
+    const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: query.slice(0, 8000)
+      })
+    });
+    const embData = await embRes.json();
+    if (!embRes.ok) throw new Error(embData.error?.message || 'Embedding error');
+    const embedding = embData.data[0].embedding;
+
+    // Find the 5 most relevant corpus chunks
+    const { data, error } = await supabaseAdmin.rpc('match_corpus_chunks', {
+      query_embedding: embedding,
+      match_count: 5
+    });
+
+    if (error) throw new Error(error.message);
+
+    return data.map(chunk => chunk.content).join('\n\n---\n\n');
+  } catch(e) {
+    console.log('Corpus retrieval error:', e.message);
+    return '';
+  }
+}
 
 const SYSTEM_PROMPT = `ROLE & IDENTITY
 
@@ -405,6 +439,12 @@ app.post('/chat', async (req, res) => {
   }
 
   try {
+    // Retrieve relevant corpus passages
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+    const corpusContext = await getRelevantCorpus(lastUserMessage);
+    const systemWithContext = corpusContext 
+      ? `${SYSTEM_PROMPT}\n\n---\nRELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response — do not quote directly, integrate naturally):\n\n${corpusContext}\n---`
+      : SYSTEM_PROMPT;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -416,7 +456,7 @@ app.post('/chat', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: SYSTEM_PROMPT,
+        system: systemWithContext,
         messages: messages
       })
     });
