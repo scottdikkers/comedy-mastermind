@@ -442,10 +442,7 @@ app.post('/chat', async (req, res) => {
     // Retrieve relevant corpus passages
     const lastUserMessage = messages[messages.length - 1]?.content || '';
     const corpusContext = await getRelevantCorpus(lastUserMessage);
-const truncatedContext = corpusContext.slice(0, 3000);
-    const systemWithContext = truncatedContext 
-      ? `${SYSTEM_PROMPT}\n\n---\nRELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response — do not quote directly, integrate naturally):\n\n${truncatedContext}\n---`
-      : SYSTEM_PROMPT;
+const systemWithContext = SYSTEM_PROMPT;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
