@@ -425,6 +425,7 @@ app.post('/chat', async (req, res) => {
     console.log('Anthropic response status:', response.status);
 
     if (!response.ok) {
+      console.log('Anthropic error:', JSON.stringify(data));
       return res.status(response.status).json({ error: data.error?.message || 'API error' });
     }
 
