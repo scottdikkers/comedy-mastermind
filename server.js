@@ -20,6 +20,37 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+const OPENAI_KEY = process.env.OPENAI_KEY;
+
+async function getRelevantCorpus(query) {
+  try {
+    const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: query.slice(0, 8000)
+      })
+    });
+    const embData = await embRes.json();
+    if (!embRes.ok) throw new Error(embData.error?.message || 'Embedding error');
+    const embedding = embData.data[0].embedding;
+    const { data, error } = await supabaseAdmin.rpc('match_corpus_chunks', {
+      query_embedding: embedding,
+      match_count: 3
+    });
+    if (error) throw new Error(error.message);
+    console.log('Corpus retrieved:', data?.length, 'chunks');
+    return data.map(chunk => `[From ${chunk.source}]: ${chunk.content}`).join('\n\n');
+  } catch(e) {
+    console.log('Corpus retrieval error:', e.message);
+    return '';
+  }
+}
+
 const TRIAL_DAYS = 7;
 const FREE_DAILY_MESSAGES = 3;
 
@@ -405,6 +436,17 @@ app.post('/chat', async (req, res) => {
   }
 
   try {
+    // Retrieve relevant corpus passages
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+    const corpusContext = await getRelevantCorpus(lastUserMessage);
+    
+    // Inject corpus into messages instead of system prompt
+    const augmentedMessages = corpusContext
+      ? [...messages.slice(0, -1), {
+          role: 'user',
+          content: `RELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response naturally, do not quote directly):\n\n${corpusContext}\n\n---\n\n${lastUserMessage}`
+        }]
+      : messages;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -417,7 +459,7 @@ app.post('/chat', async (req, res) => {
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
-        messages: messages
+        messages: augmentedMessages
       })
     });
 
