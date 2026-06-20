@@ -300,10 +300,13 @@ app.get('/user/status', async (req, res) => {
 
 // Get conversations
 app.get('/conversations', async (req, res) => {
+  console.log('Conversations route hit');
   const token = req.headers.authorization?.replace('Bearer ', '');
+  console.log('Token present:', !!token);
   if (!token) return res.status(401).json({ error: 'No token' });
   
   try {
+    console.log('Starting auth check...');
     const authResult = await Promise.race([
       supabase.auth.getUser(token),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
