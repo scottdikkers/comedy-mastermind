@@ -307,11 +307,7 @@ app.get('/conversations', async (req, res) => {
   
   try {
     console.log('Starting auth check...');
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user }, error } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) return res.status(401).json({ error: 'Invalid token' });
     
     const { data, error: dbError } = await supabaseAdmin
@@ -334,11 +330,7 @@ app.get('/conversations/:id/messages', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
   
   try {
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user }, error } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) return res.status(401).json({ error: 'Invalid token' });
     
     const { data, error: dbError } = await supabaseAdmin
@@ -360,11 +352,7 @@ app.patch('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user }, error } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) return res.status(401).json({ error: 'Invalid token' });
     const { title } = req.body;
     const { error: dbError } = await supabaseAdmin
@@ -383,11 +371,7 @@ app.delete('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user }, error } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !user) return res.status(401).json({ error: 'Invalid token' });
     const { error: dbError } = await supabaseAdmin
       .from('conversations')
@@ -416,11 +400,7 @@ app.post('/chat', async (req, res) => {
   // Authenticate if token provided
   if (token) {
     try {
-      const authResult = await Promise.race([
-        supabase.auth.getUser(token),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 4000))
-      ]);
-      const { data: { user }, error } = authResult;
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
       if (!error && user) {
         userId = user.id;
       
@@ -556,11 +536,7 @@ app.post('/create-checkout', async (req, res) => {
 
   if (token) {
     try {
-      const authResult = await Promise.race([
-        supabase.auth.getUser(token),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-      ]);
-      const { data: { user } } = authResult;
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
       if (user) {
         userId = user.id;
         customerEmail = user.email;
@@ -658,11 +634,7 @@ app.post('/create-portal', async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user } } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (!user) return res.status(401).json({ error: 'Invalid token' });
 
     const { data: profile } = await supabaseAdmin.from('profiles')
