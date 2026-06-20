@@ -303,17 +303,26 @@ app.get('/conversations', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { data, error: dbError } = await supabase
-    .from('conversations')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false });
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json(data);
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    const { data: { user }, error } = authResult;
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data, error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+    
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json(data);
+  } catch(e) {
+    console.log('Conversations error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Get messages for a conversation
@@ -321,54 +330,72 @@ app.get('/conversations/:id/messages', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { data, error: dbError } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('conversation_id', req.params.id)
-    .order('created_at', { ascending: true });
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json(data);
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    const { data: { user }, error } = authResult;
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data, error: dbError } = await supabaseAdmin
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', req.params.id)
+      .order('created_at', { ascending: true });
+    
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json(data);
+  } catch(e) {
+    console.log('Messages error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Rename conversation
 app.patch('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { title } = req.body;
-  const { data, error: dbError } = await supabase
-    .from('conversations')
-    .update({ title })
-    .eq('id', req.params.id)
-    .eq('user_id', user.id);
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json({ success: true });
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    const { data: { user }, error } = authResult;
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    const { title } = req.body;
+    const { error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .update({ title })
+      .eq('id', req.params.id)
+      .eq('user_id', user.id);
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// Delete conversation
 app.delete('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { error: dbError } = await supabase
-    .from('conversations')
-    .delete()
-    .eq('id', req.params.id)
-    .eq('user_id', user.id);
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json({ success: true });
+  try {
+    const authResult = await Promise.race([
+      supabase.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+    const { data: { user }, error } = authResult;
+    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    const { error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', user.id);
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Chat
