@@ -302,18 +302,19 @@ app.get('/user/status', async (req, res) => {
 app.get('/conversations', async (req, res) => {
   console.log('Conversations route hit');
   const token = req.headers.authorization?.replace('Bearer ', '');
-  console.log('Token present:', !!token);
   if (!token) return res.status(401).json({ error: 'No token' });
   
   try {
-    console.log('Starting auth check...');
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    // Decode JWT locally without API call
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    console.log('User ID from token:', userId);
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
     
     const { data, error: dbError } = await supabaseAdmin
       .from('conversations')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('updated_at', { ascending: false });
     
     if (dbError) return res.status(500).json({ error: dbError.message });
@@ -330,8 +331,9 @@ app.get('/conversations/:id/messages', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
   
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
     
     const { data, error: dbError } = await supabaseAdmin
       .from('messages')
@@ -352,14 +354,15 @@ app.patch('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
     const { title } = req.body;
     const { error: dbError } = await supabaseAdmin
       .from('conversations')
       .update({ title })
       .eq('id', req.params.id)
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
     if (dbError) return res.status(500).json({ error: dbError.message });
     res.json({ success: true });
   } catch(e) {
@@ -371,13 +374,14 @@ app.delete('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
     const { error: dbError } = await supabaseAdmin
       .from('conversations')
       .delete()
       .eq('id', req.params.id)
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
     if (dbError) return res.status(500).json({ error: dbError.message });
     res.json({ success: true });
   } catch(e) {
