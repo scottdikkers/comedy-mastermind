@@ -1318,10 +1318,6 @@ async function loadConversations() {
       listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">No conversations yet.</div>';
       return;
     }
-  
-  const input = document.getElementById(`rename-input-${convId}`);
-  if (input) { input.focus(); input.select(); }
-}
 
 async function saveRename(convId, newTitle) {
   if (!userToken || !newTitle.trim()) { loadConversations(); return; }
