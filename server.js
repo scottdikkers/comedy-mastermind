@@ -320,7 +320,9 @@ app.get('/conversations', async (req, res) => {
     
     console.log('Query result - error:', dbError?.message, 'count:', data?.length);
     if (dbError) return res.status(500).json({ error: dbError.message });
+    console.log('Sending response...');
     res.json(data);
+    console.log('Response sent');
     
   } catch(e) {
     console.log('Conversations error:', e.message);
