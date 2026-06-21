@@ -1326,7 +1326,7 @@ async function loadConversations() {
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
           <div style="color:#555;font-size:16px;cursor:pointer;padding:4px 6px;" onclick="event.stopPropagation();startRename('${c.id}')">✏️</div>
-          <div style="color:#444;font-size:22px;cursor:pointer;padding:0 4px;" onclick="event.stopPropagation();deleteConversation('${c.id}')">×</div>
+          <div style="color:#444;font-size:22px;cursor:pointer;padding:0 4px;" onclick="event.stopPropagation();confirmDelete('${c.id}', '${(c.title || 'Untitled').replace(/'/g, "\\'")}')">×</div>
         </div>
       </div>
     `).join('');
@@ -1377,7 +1377,23 @@ async function loadConversation(convId) {
   } catch(e) {}
 }
 
+function confirmDelete(convId, title) {
+  const dialog = document.createElement('div');
+  dialog.id = 'delete-dialog';
+  dialog.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  dialog.innerHTML = `
+    <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:28px;max-width:320px;width:100%;text-align:center;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:16px;color:#f0ece4;line-height:1.6;">Are you sure you want to delete<br><strong style="color:#e93626;">"${title}"</strong>?</div>
+      <button onclick="deleteConversation('${convId}')" style="background:#e93626;border:none;border-radius:10px;padding:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Yes, Delete</button>
+      <button onclick="document.getElementById('delete-dialog').remove()" style="background:transparent;border:1px solid #2a2a2a;border-radius:10px;padding:12px;color:#888;font-size:15px;cursor:pointer;width:100%;">No, Keep It</button>
+    </div>
+  `;
+  document.body.appendChild(dialog);
+}
+
 async function deleteConversation(convId) {
+  const dialog = document.getElementById('delete-dialog');
+  if (dialog) dialog.remove();
   if (!userToken) return;
   try {
     await fetch(`/conversations/${convId}`, {
