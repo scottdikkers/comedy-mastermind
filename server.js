@@ -20,6 +20,37 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+const OPENAI_KEY = process.env.OPENAI_KEY;
+
+async function getRelevantCorpus(query) {
+  try {
+    const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: query.slice(0, 8000)
+      })
+    });
+    const embData = await embRes.json();
+    if (!embRes.ok) throw new Error(embData.error?.message || 'Embedding error');
+    const embedding = embData.data[0].embedding;
+    const { data, error } = await supabaseAdmin.rpc('match_corpus_chunks', {
+      query_embedding: embedding,
+      match_count: 3
+    });
+    if (error) throw new Error(error.message);
+    console.log('Corpus retrieved:', data?.length, 'chunks');
+    return data.map(chunk => `[From ${chunk.source}]: ${chunk.content}`).join('\n\n');
+  } catch(e) {
+    console.log('Corpus retrieval error:', e.message);
+    return '';
+  }
+}
+
 const TRIAL_DAYS = 7;
 const FREE_DAILY_MESSAGES = 3;
 
@@ -269,20 +300,34 @@ app.get('/user/status', async (req, res) => {
 
 // Get conversations
 app.get('/conversations', async (req, res) => {
+  console.log('Conversations route hit');
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { data, error: dbError } = await supabase
-    .from('conversations')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false });
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json(data);
+  try {
+    // Decode JWT locally without API call
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    console.log('User ID from token:', userId);
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
+    
+    console.log('Querying conversations for userId:', userId);
+    const { data, error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+    
+    console.log('Query result - error:', dbError?.message, 'count:', data?.length);
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    console.log('Sending response...');
+    res.json(data);
+    console.log('Response sent');
+    
+  } catch(e) {
+    console.log('Conversations error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Get messages for a conversation
@@ -290,54 +335,63 @@ app.get('/conversations/:id/messages', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { data, error: dbError } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('conversation_id', req.params.id)
-    .order('created_at', { ascending: true });
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json(data);
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data, error: dbError } = await supabaseAdmin
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', req.params.id)
+      .order('created_at', { ascending: true });
+    
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json(data);
+  } catch(e) {
+    console.log('Messages error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Rename conversation
 app.patch('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { title } = req.body;
-  const { data, error: dbError } = await supabase
-    .from('conversations')
-    .update({ title })
-    .eq('id', req.params.id)
-    .eq('user_id', user.id);
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json({ success: true });
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
+    const { title } = req.body;
+    const { error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .update({ title })
+      .eq('id', req.params.id)
+      .eq('user_id', userId);
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// Delete conversation
 app.delete('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
-  
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
-  
-  const { error: dbError } = await supabase
-    .from('conversations')
-    .delete()
-    .eq('id', req.params.id)
-    .eq('user_id', user.id);
-  
-  if (dbError) return res.status(500).json({ error: dbError.message });
-  res.json({ success: true });
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const userId = payload.sub;
+    if (!userId) return res.status(401).json({ error: 'Invalid token' });
+    const { error: dbError } = await supabaseAdmin
+      .from('conversations')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', userId);
+    if (dbError) return res.status(500).json({ error: dbError.message });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Chat
@@ -355,11 +409,7 @@ app.post('/chat', async (req, res) => {
   // Authenticate if token provided
   if (token) {
     try {
-      const authResult = await Promise.race([
-        supabase.auth.getUser(token),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 4000))
-      ]);
-      const { data: { user }, error } = authResult;
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
       if (!error && user) {
         userId = user.id;
       
@@ -405,6 +455,17 @@ app.post('/chat', async (req, res) => {
   }
 
   try {
+    // Retrieve relevant corpus passages
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+    const corpusContext = await getRelevantCorpus(lastUserMessage);
+    
+    // Inject corpus into messages instead of system prompt
+    const augmentedMessages = corpusContext
+      ? [...messages.slice(0, -1), {
+          role: 'user',
+          content: `RELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response naturally, do not quote directly):\n\n${corpusContext}\n\n---\n\n${lastUserMessage}`
+        }]
+      : messages;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -417,7 +478,7 @@ app.post('/chat', async (req, res) => {
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
-        messages: messages
+        messages: augmentedMessages
       })
     });
 
@@ -484,11 +545,7 @@ app.post('/create-checkout', async (req, res) => {
 
   if (token) {
     try {
-      const authResult = await Promise.race([
-        supabase.auth.getUser(token),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-      ]);
-      const { data: { user } } = authResult;
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
       if (user) {
         userId = user.id;
         customerEmail = user.email;
@@ -586,11 +643,7 @@ app.post('/create-portal', async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const authResult = await Promise.race([
-      supabase.auth.getUser(token),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]);
-    const { data: { user } } = authResult;
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     if (!user) return res.status(401).json({ error: 'Invalid token' });
 
     const { data: profile } = await supabaseAdmin.from('profiles')

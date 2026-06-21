@@ -891,11 +891,7 @@
 <div id="auth-screen" style="display:none;">
   <div class="auth-card">
     <div class="auth-badge">
-      <svg viewBox="0 0 200 200" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="#e93626"/>
-        <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
-        <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
-      </svg>
+      <img src="/favicon2.png" width="64" height="64" style="border-radius:50%;display:block;">
     </div>
     <div class="auth-title">Comedy Mastermind</div>
     <div id="auth-sub-signin" class="auth-sub">Welcome back. Sign in to continue.</div>
@@ -942,10 +938,10 @@
  
     <div class="menu-section">
       <button class="menu-item" onclick="newConversation();toggleMenu()">
-        <span class="menu-icon">✏️</span> New Conversation
+        <span class="menu-icon">✏️</span> New Chat
       </button>
       <button class="menu-item" id="menu-history-btn" onclick="openScreen('screen-history');toggleMenu()">
-        <span class="menu-icon">🕐</span> Conversation History
+        <span class="menu-icon">🕐</span> Chat History
       </button>
     </div>
  
@@ -959,9 +955,6 @@
     </div>
  
     <div class="menu-section">
-      <button class="menu-item" onclick="openScreen('screen-about')">
-        <span class="menu-icon">🎭</span> About Scott Dikkers
-      </button>
       <button class="menu-item" onclick="openScreen('screen-help')">
         <span class="menu-icon">❓</span> Help & FAQ
       </button>
@@ -1118,17 +1111,13 @@ FINAL PRINCIPLE
 You are supportive. You are demanding. You are on their side. And you actually read their work.`;
  
 const SUGGESTIONS = [
-  "Help me brainstorm 10 premises for a comedy piece about modern dating",
+  "What makes a great sketch comedy premise?",
   "I have a joke I'd like feedback on",
   "How do I develop a stronger comedic voice?",
-  "What makes a great sketch comedy premise?"
+  "How can I succeed and make money in the comedy business?"
 ];
  
-const AVATAR_SVG = `<svg viewBox="0 0 200 200" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
-  <rect width="200" height="200" fill="#e93626" rx="100"/>
-  <ellipse cx="100" cy="65" rx="26" ry="30" fill="#000"/>
-  <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
-</svg>`;
+const AVATAR_SVG = `<img src="/favicon2.png" width="30" height="30" style="border-radius:50%;display:block;">`;
  
 let history = [];
 let loading = false;
@@ -1323,21 +1312,48 @@ async function loadConversations() {
     });
     const convs = await res.json();
     if (!Array.isArray(convs) || !convs.length) {
-      listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">No conversations yet.</div>';
+      listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">No chats yet.</div>';
       return;
     }
     listEl.innerHTML = convs.map(c => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #1c1c1c;cursor:pointer;" onclick="loadConversation('${c.id}')">
-        <div>
-          <div style="font-size:15px;color:#f0ece4;line-height:1.4;">${c.title || 'Untitled'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1c1c1c;" id="conv-${c.id}">
+        <div style="flex:1;cursor:pointer;" onclick="loadConversation('${c.id}')">
+          <div id="conv-title-${c.id}" style="font-size:15px;color:#f0ece4;line-height:1.4;">${c.title || 'Untitled'}</div>
           <div style="font-size:12px;color:#555;margin-top:3px;">${new Date(c.updated_at).toLocaleDateString()}</div>
         </div>
-        <div style="color:#444;font-size:22px;padding:0 8px;" onclick="event.stopPropagation();deleteConversation('${c.id}')">×</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <div style="color:#555;font-size:16px;cursor:pointer;padding:4px 6px;" onclick="event.stopPropagation();startRename('${c.id}')">✏️</div>
+          <div style="color:#444;font-size:22px;cursor:pointer;padding:0 4px;" onclick="event.stopPropagation();confirmDelete('${c.id}', '${(c.title || 'Untitled').replace(/'/g, "\\'")}')">×</div>
+        </div>
       </div>
     `).join('');
   } catch(e) {
-    listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Could not load conversations.</div>';
+    listEl.innerHTML = '<div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Could not load chats.</div>';
   }
+}
+
+async function saveRename(convId, newTitle) {
+  if (!userToken || !newTitle.trim()) { loadConversations(); return; }
+  try {
+    await fetch(`/conversations/${convId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`
+      },
+      body: JSON.stringify({ title: newTitle.trim() })
+    });
+  } catch(e) {}
+  loadConversations();
+}
+
+async function startRename(convId) {
+  const titleEl = document.getElementById(`conv-title-${convId}`);
+  if (!titleEl) return;
+  const currentTitle = titleEl.textContent;
+  titleEl.outerHTML = `<input id="rename-input-${convId}" type="text" value="${currentTitle.replace(/"/g, '&quot;')}" style="background:#1a1a1a;border:1px solid #e93626;border-radius:6px;padding:4px 8px;color:#f0ece4;font-size:15px;width:100%;outline:none;" onblur="saveRename('${convId}', this.value)" onkeydown="if(event.key==='Enter') this.blur(); if(event.key==='Escape') loadConversations();">`;
+  const input = document.getElementById(`rename-input-${convId}`);
+  if (input) { input.focus(); input.select(); }
 }
 
 async function loadConversation(convId) {
@@ -1358,7 +1374,23 @@ async function loadConversation(convId) {
   } catch(e) {}
 }
 
+function confirmDelete(convId, title) {
+  const dialog = document.createElement('div');
+  dialog.id = 'delete-dialog';
+  dialog.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  dialog.innerHTML = `
+    <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:28px;max-width:320px;width:100%;text-align:center;display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:16px;color:#f0ece4;line-height:1.6;">Are you sure you want to delete<br><strong style="color:#e93626;">"${title}"</strong>?</div>
+      <button onclick="deleteConversation('${convId}')" style="background:#e93626;border:none;border-radius:10px;padding:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Yes, Delete</button>
+      <button onclick="document.getElementById('delete-dialog').remove()" style="background:transparent;border:1px solid #2a2a2a;border-radius:10px;padding:12px;color:#888;font-size:15px;cursor:pointer;width:100%;">No, Keep It</button>
+    </div>
+  `;
+  document.body.appendChild(dialog);
+}
+
 async function deleteConversation(convId) {
+  const dialog = document.getElementById('delete-dialog');
+  if (dialog) dialog.remove();
   if (!userToken) return;
   try {
     await fetch(`/conversations/${convId}`, {
@@ -1725,7 +1757,7 @@ function rateStar(n) {
 <div id="screen-history" class="inner-screen">
   <div class="inner-header">
     <button class="back-btn" onclick="closeScreen('screen-history')">← Back</button>
-    <div class="inner-title">History</div>
+    <div class="inner-title">Chat History</div>
   </div>
   <div class="inner-body" id="history-list" style="gap:0;padding:8px 20px;">
     <div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Loading conversations...</div>
@@ -1822,7 +1854,7 @@ function rateStar(n) {
   <div class="inner-body">
     <div class="faq-item">
       <div class="faq-q">What is Comedy Mastermind?</div>
-      <div class="faq-a">Comedy Mastermind is an AI comedy coach built from Scott Dikkers' complete body of work — his books, courses, speeches, and decades of teaching. It helps you brainstorm ideas, improve jokes, get feedback on your writing, and build a comedy career.</div>
+      <div class="faq-a">Comedy Mastermind is an AI comedy coach built from Scott Dikkers' complete body of work — his books, courses, interviews, and decades of teaching. It helps you brainstorm ideas, improve jokes, get feedback on your writing, and build a comedy career.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">How is this different from ChatGPT?</div>
@@ -1834,7 +1866,7 @@ function rateStar(n) {
     </div>
     <div class="faq-item">
       <div class="faq-q">Can I save my conversations?</div>
-      <div class="faq-a">Yes — your conversations are automatically saved and can be renamed and revisited anytime from the Conversation History menu. For best results, start a new conversation when switching to a new topic or project.</div>
+      <div class="faq-a">Yes — your conversations are automatically saved and can be renamed and revisited anytime from the Chat History menu. For best results, start a new conversation when switching to a new topic or project.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">How do I cancel my subscription?</div>
@@ -1842,7 +1874,7 @@ function rateStar(n) {
     </div>
     <div class="faq-item">
       <div class="faq-q">I need more help</div>
-      <div class="faq-a">Email us at support@comedymastermind.com and we'll get back to you within one business day.</div>
+      <div class="faq-a">Email support@howtowritefunny.com and a live agent will get back to you promptly.</div>
     </div>
   </div>
 </div>
