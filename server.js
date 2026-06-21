@@ -311,14 +311,17 @@ app.get('/conversations', async (req, res) => {
     console.log('User ID from token:', userId);
     if (!userId) return res.status(401).json({ error: 'Invalid token' });
     
+    console.log('Querying conversations for userId:', userId);
     const { data, error: dbError } = await supabaseAdmin
       .from('conversations')
       .select('*')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
     
+    console.log('Query result - error:', dbError?.message, 'count:', data?.length);
     if (dbError) return res.status(500).json({ error: dbError.message });
     res.json(data);
+    
   } catch(e) {
     console.log('Conversations error:', e.message);
     res.status(500).json({ error: e.message });
