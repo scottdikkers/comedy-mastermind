@@ -206,85 +206,6 @@
     width: 100%;
   }
  
-  /* ── KEY SCREEN ── */
-  #key-screen {
-    position: fixed;
-    inset: 0;
-    background: #0d0d0d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 300;
-    padding: 24px;
-  }
- 
-  .key-card {
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 16px;
-    padding: 40px 32px;
-    max-width: 380px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    text-align: center;
-  }
- 
-  .key-badge {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 4px;
-  }
- 
-  .key-title {
-    font-family: 'Nunito Sans', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #f0ece4;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
- 
-  .key-sub {
-    font-size: 14px;
-    color: #666;
-    line-height: 1.6;
-  }
- 
-  .key-input {
-    width: 100%;
-    background: #0d0d0d;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
-    padding: 13px 16px;
-    color: #f0ece4;
-    font-family: monospace;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
- 
-  .key-input:focus { border-color: #e93626; }
- 
-  .key-btn {
-    width: 100%;
-    background: #e93626;
-    border: none;
-    border-radius: 10px;
-    padding: 14px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: opacity 0.15s;
-  }
- 
-  .key-btn:hover { opacity: 0.9; }
-  .key-error { font-size: 13px; color: #e93626; }
-  .key-note { font-size: 11px; color: #333; line-height: 1.6; }
   #splash {
     position: fixed;
     inset: 0;
@@ -909,23 +830,6 @@
   </div>
 </div>
  
-<!-- KEY SCREEN (testing only) -->
-<div id="key-screen">
-  <div class="key-card">
-    <svg class="key-badge" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <rect width="200" height="200" fill="#e93626" rx="40"/>
-      <ellipse cx="100" cy="65" rx="28" ry="32" fill="#000"/>
-      <path d="M20 200 Q20 126 100 114 Q180 126 180 200 Z" fill="#000"/>
-    </svg>
-    <div class="key-title">Comedy Mastermind</div>
-    <div class="key-sub">Enter your OpenAI API key to begin testing. Your key stays in this browser tab only and is never stored.</div>
-    <input class="key-input" id="key-input" type="password" placeholder="sk-proj-..." />
-    <div class="key-error" id="key-error" style="display:none">That doesn't look like a valid key. It should start with "sk-".</div>
-    <button class="key-btn" onclick="submitKey()">Start Testing</button>
-    <div class="key-note">⚠️ For testing only. Your API key will not appear in the final app.</div>
-  </div>
-</div>
- 
 <!-- SPLASH -->
 <div id="splash" style="display:none">
   <img src="/splash.png" style="width:100%;height:100%;object-fit:cover;object-position:center;" alt="Comedy Mastermind">
@@ -1318,15 +1222,6 @@ async function deleteConversation(convId) {
   } catch(e) {}
 }
 
-function submitKey() {
-  document.getElementById('key-screen').style.display = 'none';
-  showSplash();
-}
-
-document.getElementById('key-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitKey();
-});
-
 function showSplash() {
   document.getElementById('splash').style.display = 'flex';
   setTimeout(() => {
@@ -1361,7 +1256,6 @@ function showSuccessMessage() {
 
 // Auto-start on load
 window.addEventListener('load', async () => {
-  document.getElementById('key-screen').style.display = 'none';
   const savedToken = localStorage.getItem('cm_token');
   const savedEmail = localStorage.getItem('cm_email');
   if (savedToken) {
