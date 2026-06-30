@@ -1570,7 +1570,7 @@ function rateStar(n) {
     <button class="back-btn" onclick="closeScreen('screen-history')">← Back</button>
     <div class="inner-title">Chat History</div>
   </div>
-  <div class="inner-body" id="history-list" style="gap:0;padding:8px 20px;">
+  <div class="inner-body" id="history-list" style="gap:0;padding:8px 20px;overflow-y:auto;max-height:calc(100vh - 80px);">
     <div style="text-align:center;color:#555;font-size:14px;padding:40px 0;">Loading conversations...</div>
   </div>
 </div>
