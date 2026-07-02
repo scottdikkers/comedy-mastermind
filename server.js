@@ -424,19 +424,21 @@ app.post('/chat', async (req, res) => {
         }
         // Create conversation if needed
         if (!activeConversationId) {
-          const firstMessage = messages[0]?.content || 'New conversation';
-          const title = firstMessage.length > 50 
-            ? firstMessage.substring(0, 50) + '...' 
-            : firstMessage;
-          
-          const { data: conv } = await supabaseAdmin
-            .from('conversations')
-            .insert({ user_id: userId, title })
-            .select()
-            .single();
-          
-          if (conv) activeConversationId = conv.id;
-        }
+        const firstMessage = messages[0]?.content || 'New conversation';
+        const title = firstMessage.length > 50 
+          ? firstMessage.substring(0, 50) + '...' 
+          : firstMessage;
+        
+        console.log('Creating new conversation for user:', userId, 'title:', title);
+        const { data: conv, error: convError } = await supabaseAdmin
+          .from('conversations')
+          .insert({ user_id: userId, title })
+          .select()
+          .single();
+        
+        console.log('Conversation created:', conv?.id, 'error:', convError?.message);
+        if (conv) activeConversationId = conv.id;
+      }
         // Save user message
         if (activeConversationId) {
           const lastMessage = messages[messages.length - 1];
