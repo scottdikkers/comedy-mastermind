@@ -1422,6 +1422,8 @@ abortController = null;
  
     addBubble('assistant', reply);
     history.push({ role: 'assistant', content: reply });
+    if (document.getElementById('screen-history').classList.contains('open')) loadConversations();
+    if (data.conversationId) currentConversationId = data.conversationId;
  
   } catch (err) {
     const tr = document.getElementById('typing-row');
