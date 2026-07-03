@@ -409,8 +409,10 @@ app.post('/chat', async (req, res) => {
   // Authenticate if token provided
   if (token) {
     try {
-      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-      userId = payload.sub;
+      if (token && token.split('.').length === 3) {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        userId = payload.sub;
+      }
       
       if (userId) {
         // Check if user can chat
