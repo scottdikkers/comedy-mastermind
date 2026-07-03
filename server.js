@@ -306,6 +306,7 @@ app.get('/conversations', async (req, res) => {
   
   try {
     // Decode JWT locally without API call
+    if (!token || token.split('.').length !== 3) return res.status(401).json({ error: 'Invalid token' });
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     const userId = payload.sub;
     console.log('User ID from token:', userId);
@@ -336,6 +337,7 @@ app.get('/conversations/:id/messages', async (req, res) => {
   if (!token) return res.status(401).json({ error: 'No token' });
   
   try {
+    if (!token || token.split('.').length !== 3) return res.status(401).json({ error: 'Invalid token' });
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     const userId = payload.sub;
     if (!userId) return res.status(401).json({ error: 'Invalid token' });
@@ -359,6 +361,7 @@ app.patch('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
+    if (!token || token.split('.').length !== 3) return res.status(401).json({ error: 'Invalid token' });
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     const userId = payload.sub;
     if (!userId) return res.status(401).json({ error: 'Invalid token' });
@@ -379,6 +382,7 @@ app.delete('/conversations/:id', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   try {
+    if (!token || token.split('.').length !== 3) return res.status(401).json({ error: 'Invalid token' });
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     const userId = payload.sub;
     if (!userId) return res.status(401).json({ error: 'Invalid token' });
