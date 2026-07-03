@@ -409,45 +409,45 @@ app.post('/chat', async (req, res) => {
   // Authenticate if token provided
   if (token) {
     try {
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-      if (!error && user) {
-        userId = user.id;
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+      userId = payload.sub;
       
-      // Check if user can chat
-      const status = await getUserStatus(userId);
-      if (status && !status.canChat) {
-        return res.status(403).json({ 
-          error: 'daily_limit_reached',
-          message: 'You have used your 3 free messages for today. Upgrade to continue.',
-          messagesToday: status.messagesToday
-        });
-      }
-
-      // Create conversation if needed
-      if (!activeConversationId) {
+      if (userId) {
+        // Check if user can chat
+        const status = await getUserStatus(userId);
+        if (status && !status.canChat) {
+          return res.status(403).json({ 
+            error: 'daily_limit_reached',
+            message: 'You have used your 3 free messages for today. Upgrade to continue.',
+            messagesToday: status.messagesToday
+          });
+        }
+        // Create conversation if needed
+        if (!activeConversationId) {
         const firstMessage = messages[0]?.content || 'New conversation';
         const title = firstMessage.length > 50 
           ? firstMessage.substring(0, 50) + '...' 
           : firstMessage;
         
-        const { data: conv } = await supabase
+        console.log('Creating new conversation for user:', userId, 'title:', title);
+        const { data: conv, error: convError } = await supabaseAdmin
           .from('conversations')
           .insert({ user_id: userId, title })
           .select()
           .single();
         
+        console.log('Conversation created:', conv?.id, 'error:', convError?.message);
         if (conv) activeConversationId = conv.id;
       }
-
-      // Save user message
-      if (activeConversationId) {
-        const lastMessage = messages[messages.length - 1];
-        await supabaseAdmin.from('messages').insert({
-          conversation_id: activeConversationId,
-          role: lastMessage.role,
-          content: lastMessage.content
-        });
-      }
+        // Save user message
+        if (activeConversationId) {
+          const lastMessage = messages[messages.length - 1];
+          await supabaseAdmin.from('messages').insert({
+            conversation_id: activeConversationId,
+            role: lastMessage.role,
+            content: lastMessage.content
+          });
+        }
       }
     } catch(authErr) {
       console.log('Chat auth error:', authErr.message);
