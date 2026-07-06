@@ -43,8 +43,10 @@ async function getRelevantCorpus(query) {
       match_count: 3
     });
     if (error) throw new Error(error.message);
-    console.log('Corpus retrieved:', data?.length, 'chunks');
-    return data.map(chunk => `[From ${chunk.source}]: ${chunk.content}`).join('\n\n');
+    const relevant = data.filter(chunk => chunk.similarity > 0.35);
+    console.log('Corpus retrieved:', relevant.length, 'of', data?.length, 'chunks above threshold');
+    if (relevant.length === 0) return '';
+    return relevant.map(chunk => `[From ${chunk.source}]: ${chunk.content}`).join('\n\n');
   } catch(e) {
     console.log('Corpus retrieval error:', e.message);
     return '';
