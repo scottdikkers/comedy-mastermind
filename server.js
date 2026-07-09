@@ -303,6 +303,7 @@ app.get('/user/status', async (req, res) => {
 // Get conversations
 app.get('/conversations', async (req, res) => {
   console.log('Conversations route hit');
+  console.log('Auth header:', req.headers.authorization?.substring(0, 20));
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'No token' });
   
