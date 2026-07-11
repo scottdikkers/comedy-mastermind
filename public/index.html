@@ -1017,7 +1017,10 @@ async function handleAuth() {
     });
     const data = await res.json();
     if (!res.ok) {
-      errEl.textContent = data.error || 'Something went wrong. Please try again.';
+      const errorMsg = data.error || 'Something went wrong. Please try again.';
+      errEl.textContent = errorMsg.toLowerCase().includes('confirm') 
+        ? 'Please check your email and click the confirmation link before signing in.'
+        : errorMsg;
       errEl.style.display = 'block';
       btn.disabled = false;
       btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';

@@ -328,7 +328,7 @@ app.get('/conversations', async (req, res) => {
     console.log('Response sent');
     
   } catch(e) {
-    console.log('Conversations error:', e.message);
+    console.log('Conversations error:', e.message, 'token length:', req.headers.authorization?.length);
     res.status(500).json({ error: e.message });
   }
 });
