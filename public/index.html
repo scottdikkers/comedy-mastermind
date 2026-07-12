@@ -1236,12 +1236,13 @@ async function deleteConversation(convId) {
 }
 
 function showSplash() {
-  document.getElementById('splash').style.display = 'flex';
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('fade-out');
+  const splash = document.getElementById('splash');
+  const video = document.getElementById('splash-video');
+  splash.style.display = 'flex';
+  function hideSplash() {
+    splash.classList.add('fade-out');
     setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-      // Check if returning from successful payment
+      splash.style.display = 'none';
       const params = new URLSearchParams(window.location.search);
       if (params.get('upgrade') === 'success') {
         history.window = window.history;
@@ -1251,7 +1252,13 @@ function showSplash() {
         renderEmpty();
       }
     }, 700);
-  }, 2200);
+  }
+  if (video) {
+    video.onended = hideSplash;
+    setTimeout(hideSplash, 4000); // fallback in case video fails
+  } else {
+    setTimeout(hideSplash, 2200);
+  }
 }
 
 function showSuccessMessage() {
