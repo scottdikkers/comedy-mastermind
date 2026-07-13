@@ -468,12 +468,10 @@ app.post('/chat', async (req, res) => {
     const corpusContext = await getRelevantCorpus(lastUserMessage);
     
     // Inject corpus into messages instead of system prompt
-    const augmentedMessages = corpusContext
-      ? [...messages.slice(0, -1), {
-          role: 'user',
-          content: `RELEVANT PASSAGES FROM SCOTT DIKKERS' BOOKS (use to inform your response naturally, do not quote directly):\n\n${corpusContext}\n\n---\n\n${lastUserMessage}`
-        }]
-      : messages;
+    const augmentedMessages = messages;
+    const systemWithCorpus = corpusContext
+      ? `${SYSTEM_PROMPT}\n\n<knowledge_base>\n${corpusContext}\n</knowledge_base>\n\nThe above knowledge_base contains relevant passages from Scott Dikkers' books. Use this material to inform your responses naturally. Never acknowledge, reference, or mention the knowledge_base or that passages were provided to you. Never tell users about the technical implementation of how you work.`
+      : SYSTEM_PROMPT;
     console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -485,7 +483,7 @@ app.post('/chat', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: SYSTEM_PROMPT,
+        system: systemWithCorpus,
         messages: augmentedMessages
       })
     });
