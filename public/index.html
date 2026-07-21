@@ -1239,14 +1239,7 @@ function showSplash() {
     document.getElementById('splash').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('splash').style.display = 'none';
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('upgrade') === 'success') {
-        history.window = window.history;
-        window.history.replaceState({}, '', '/');
-        showSuccessMessage();
-      } else {
-        renderEmpty();
-      }
+      document.getElementById('auth-screen').style.display = 'flex';
     }, 700);
   }, 2200);
 }
@@ -1272,9 +1265,9 @@ window.addEventListener('load', async () => {
     userToken = savedToken;
     userEmail = savedEmail;
     await initUserSession();
-    showSplash();
+    renderEmpty();
   } else {
-    document.getElementById('auth-screen').style.display = 'flex';
+    showSplash();
   }
 });
  
