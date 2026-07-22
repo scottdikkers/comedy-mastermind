@@ -478,12 +478,19 @@ app.post('/chat', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: systemWithCorpus,
+        system: [
+          {
+            type: 'text',
+            text: systemWithCorpus,
+            cache_control: { type: 'ephemeral' }
+          }
+        ],
         messages: augmentedMessages
       })
     });
