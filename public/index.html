@@ -883,12 +883,13 @@
   </div>
 </div>
  
+<button class="hamburger" onclick="toggleMenu()" aria-label="Menu" style="position:fixed;top:calc(env(safe-area-inset-top) + 16px);left:16px;z-index:500;">
+  <span></span><span></span><span></span>
+</button>
+
 <!-- APP -->
 <div id="app">
   <div class="app-header">
-    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
     <div class="header-center">
       <svg class="header-badge" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <rect width="200" height="200" fill="#000" rx="40"/>
