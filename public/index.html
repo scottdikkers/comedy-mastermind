@@ -1019,7 +1019,7 @@ async function handleAuth() {
     localStorage.setItem('cm_email', userEmail);
     document.getElementById('auth-screen').style.display = 'none';
     await initUserSession();
-    showSplash();
+    renderEmpty();
   } catch (err) {
     errEl.textContent = 'Connection error. Please try again.';
     errEl.style.display = 'block';
