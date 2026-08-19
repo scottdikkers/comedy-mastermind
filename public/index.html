@@ -838,44 +838,43 @@
  
     <div class="menu-section">
       <button class="menu-item" onclick="newConversation();toggleMenu()">
-        <span class="menu-icon">✏️</span> New Chat
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="0" y1="-14" x2="0" y2="14"/><line x1="-14" y1="0" x2="14" y2="0"/></svg></span> New Chat
       </button>
       <button class="menu-item" id="menu-history-btn" onclick="toggleMenu();openScreen('screen-history')">
-        <span class="menu-icon">🕐</span> Chat History
-      </button>
-    </div>
- 
-    <div class="menu-section">
-      <button class="menu-item highlight" onclick="openScreen('screen-subscription')">
-        <span class="menu-icon">⭐</span> Subscription
-      </button>
-      <button class="menu-item" onclick="openScreen('screen-settings')">
-        <span class="menu-icon">⚙️</span> Account Settings
-      </button>
-    </div>
- 
-    <div class="menu-section">
-      <button class="menu-item" onclick="openScreen('screen-help')">
-        <span class="menu-icon">❓</span> Help & FAQ
-      </button>
-      <button class="menu-item" onclick="openScreen('screen-rate')">
-        <span class="menu-icon">⭐</span> Rate This App
-      </button>
-    </div>
- 
-    <div class="menu-section">
-      <div id="menu-user-email" style="padding:10px 24px;font-size:12px;color:#444;"></div>
-      <button class="menu-item" onclick="handleSignOut()" style="color:#e93626;">
-        <span class="menu-icon">🚪</span> Sign Out
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M-18 -16 Q-18 -22 -12 -22 L12 -22 Q18 -22 18 -16 L18 4 Q18 10 12 10 L2 10 L-8 18 L-8 10 L-12 10 Q-18 10 -18 4 Z"/><circle cx="0" cy="-6" r="9"/><line x1="0" y1="-6" x2="0" y2="-13"/><line x1="0" y1="-6" x2="6" y2="-3"/></svg></span> Chat History
       </button>
     </div>
 
     <div class="menu-section">
+      <button class="menu-item highlight" onclick="openScreen('screen-subscription')">
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="-18" y="-18" width="36" height="36" rx="4"/><polygon points="0,-11 3,-4 10,-4 5,1 7,9 0,4 -7,9 -5,1 -10,-4 -3,-4"/></svg></span> Subscription
+      </button>
+      <button class="menu-item" onclick="openScreen('screen-settings')">
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="7"/><circle cx="0" cy="0" r="14"/><line x1="0" y1="-18" x2="0" y2="-14"/><line x1="0" y1="14" x2="0" y2="18"/><line x1="-18" y1="0" x2="-14" y2="0"/><line x1="14" y1="0" x2="18" y2="0"/><line x1="-12.7" y1="-12.7" x2="-9.9" y2="-9.9"/><line x1="9.9" y1="9.9" x2="12.7" y2="12.7"/><line x1="12.7" y1="-12.7" x2="9.9" y2="-9.9"/><line x1="-9.9" y1="9.9" x2="-12.7" y2="12.7"/></svg></span> Account Settings
+      </button>
+    </div>
+
+    <div class="menu-section">
+      <button class="menu-item" onclick="openScreen('screen-help')">
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="16"/><path d="M-4 -3 Q-4 -8 0 -8 Q4 -8 4 -3 Q4 0 0 3 L0 6"/><circle cx="0" cy="9" r="1.5" fill="#aaa" stroke="none"/></svg></span> Help & FAQ
+      </button>
+      <button class="menu-item" onclick="openScreen('screen-rate')">
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="0,-16 4,-6 15,-6 7,1 10,12 0,6 -10,12 -7,1 -15,-6 -4,-6"/></svg></span> Rate This App
+      </button>
+    </div>
+
+    <div class="menu-section">
+      <div id="menu-user-email" style="padding:10px 24px;font-size:12px;color:#444;"></div>
+      <button class="menu-item" onclick="handleSignOut()" style="color:#e93626;">
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6,-14 L-14,-14 L-14,14 L6,14"/><line x1="0" y1="0" x2="16" y2="0"/><polyline points="10,-6 16,0 10,6"/></svg></span> Sign Out
+      </button>
+    </div>
+    <div class="menu-section">
       <button class="menu-item" style="font-size:13px;color:#444" onclick="openScreen('screen-privacy')">
-        <span class="menu-icon">📄</span> Privacy Policy
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="-12" y="-16" width="24" height="32" rx="2"/><line x1="-7" y1="-6" x2="7" y2="-6"/><line x1="-7" y1="0" x2="7" y2="0"/><line x1="-7" y1="6" x2="2" y2="6"/></svg></span> Privacy Policy
       </button>
       <button class="menu-item" style="font-size:13px;color:#444" onclick="openScreen('screen-terms')">
-        <span class="menu-icon">📋</span> Terms of Use
+        <span class="menu-icon"><svg width="20" height="20" viewBox="-24 -24 48 48" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="-12" y="-12" width="24" height="28" rx="2"/><rect x="-6" y="-16" width="12" height="6" rx="2"/><polyline points="-6,4 -2,9 7,-2"/></svg></span> Terms of Use
       </button>
     </div>
   </div>
