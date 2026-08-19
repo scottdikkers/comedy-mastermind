@@ -1452,6 +1452,7 @@ async function startCheckout(tier) {
  function openScreen(id) {
   toggleMenu();
   document.getElementById(id).classList.add('open');
+  document.querySelector('.hamburger').style.visibility = 'hidden';
   if (id === 'screen-history') loadConversations();
   if (id === 'screen-subscription') updateSubscriptionScreen();
   if (id === 'screen-settings') updateSettingsScreen();
