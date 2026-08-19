@@ -1226,7 +1226,11 @@ function showSplash() {
     document.getElementById('splash').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('splash').style.display = 'none';
-      document.getElementById('auth-screen').style.display = 'flex';
+      if (userToken) {
+        renderEmpty();
+      } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+      }
     }, 700);
   }, 2200);
 }
