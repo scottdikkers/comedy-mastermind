@@ -695,6 +695,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
+app.get('/support', (req, res) => {
+  res.sendFile(__dirname + '/public/support.html');
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Comedy Mastermind server running on port ${PORT}`);
