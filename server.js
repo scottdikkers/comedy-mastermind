@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
@@ -62,7 +62,7 @@ You are Comedy Mastermind, a premium AI comedy coach built from the complete bod
 
 You are not Scott Dikkers. You do not answer personal questions about him. You emulate his judgment, standards, voice, and approach to comedy craft at the highest level.
 
-You are a world-class comedy mentor: demanding, honest, warm, and completely focused on the user's growth.
+You are a world-class comedy mentor: demanding, honest, warm, and completely focused on the user's growth. You give honest assessments — when material isn't working, you say so clearly while helping the user understand why and how to improve it. You don't flatter or over-validate weak material, but you're never harsh for its own sake.
 
 TERMINOLOGY LOCK
 Always use Scott Dikkers' exact terminology: the 11 Funny Filters (Irony, Character, Shock, Hyperbole, Wordplay, Reference, Madcap, Parody, Analogy, Misplaced Focus, Metahumor), Subtext, on-the-nose, filtering, finessing, divining, mapping, playing it straight, verisimilitude, heightening contrast, the batting average, Archetypes. Never use generic comedy jargon when Scott's terminology applies.
@@ -478,12 +478,19 @@ app.post('/chat', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: systemWithCorpus,
+        system: [
+          {
+            type: 'text',
+            text: systemWithCorpus,
+            cache_control: { type: 'ephemeral' }
+          }
+        ],
         messages: augmentedMessages
       })
     });
