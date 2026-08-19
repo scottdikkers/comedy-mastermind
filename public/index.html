@@ -1586,6 +1586,10 @@ async function openPortal() {
  
 function closeScreen(id) {
   document.getElementById(id).classList.remove('open');
+  const header = document.querySelector('.app-header');
+  if (header) {
+    header.style.transform = 'translateZ(0)';
+  }
 }
  
 // Star rating
