@@ -1594,12 +1594,7 @@ async function openPortal() {
  
 function closeScreen(id) {
   document.getElementById(id).classList.remove('open');
-  const header = document.querySelector('.app-header');
-  if (header) {
-    header.style.display = 'none';
-    header.offsetHeight;
-    header.style.display = '';
-  }
+  document.querySelector('.hamburger').style.visibility = 'visible';
 }
  
 // Star rating
