@@ -695,6 +695,44 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
+// Delete account
+app.post('/auth/delete-account', async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const userId = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).sub;
+    const { data: profile } = await supabaseAdmin.from('profiles')
+      .select('stripe_customer_id, stripe_subscription_id, subscription_tier')
+      .eq('id', userId)
+      .single();
+    // Cancel Stripe subscription if active (not lifetime)
+    if (profile?.stripe_subscription_id && profile?.subscription_tier !== 'lifetime') {
+      await fetch(`https://api.stripe.com/v1/subscriptions/${profile.stripe_subscription_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}` }
+      });
+      console.log(`Cancelled Stripe subscription for user ${userId}`);
+    }
+    // Delete conversations and messages
+    const { data: convos } = await supabaseAdmin.from('conversations')
+      .select('id').eq('user_id', userId);
+    if (convos?.length) {
+      const ids = convos.map(c => c.id);
+      await supabaseAdmin.from('messages').delete().in('conversation_id', ids);
+      await supabaseAdmin.from('conversations').delete().eq('user_id', userId);
+    }
+    // Delete profile
+    await supabaseAdmin.from('profiles').delete().eq('id', userId);
+    // Delete auth user
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+    console.log(`Deleted account for user ${userId}`);
+    res.json({ success: true });
+  } catch(e) {
+    console.log('Delete account error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/support', (req, res) => {
   res.sendFile(__dirname + '/public/support.html');
 });
