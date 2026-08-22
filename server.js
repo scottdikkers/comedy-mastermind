@@ -542,7 +542,7 @@ app.post('/chat', async (req, res) => {
 
 // Stripe checkout
 app.post('/create-checkout', async (req, res) => {
-  const { tier, token } = req.body;
+  const { tier, token, coupon } = req.body;
   
   const priceMap = {
     monthly: process.env.STRIPE_PRICE_MONTHLY,
@@ -578,6 +578,7 @@ app.post('/create-checkout', async (req, res) => {
     });
     if (userId) body.append('metadata[userId]', userId);
     if (customerEmail) body.append('customer_email', customerEmail);
+    if (coupon) body.append('discounts[0][coupon]', coupon);
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
