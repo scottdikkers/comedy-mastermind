@@ -423,7 +423,7 @@ app.post('/chat', async (req, res) => {
       if (userId) {
         // Check if user can chat
         const status = await getUserStatus(userId);
-        if (status && !status.canChat) {
+        if (status && status.canChat === false) {
           return res.status(403).json({ 
             error: 'daily_limit_reached',
             message: 'You have used your 3 free messages for today. Upgrade to continue.',
