@@ -1334,6 +1334,7 @@ function clickSuggestion(btn) {
 }
  
 function newConversation() {
+  currentConversationId = null;
   history = [];
   renderEmpty();
   const input = document.getElementById('input');
