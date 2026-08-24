@@ -1219,7 +1219,9 @@ async function startRename(convId) {
 async function loadConversation(convId) {
   if (!userToken) return;
   closeScreen('screen-history');
-  try {
+  const menuOverlay = document.getElementById('menu-overlay');
+  if (menuOverlay && menuOverlay.classList.contains('open')) toggleMenu();
+ try {
     const res = await fetch(`/conversations/${convId}/messages`, {
       headers: { 'Authorization': `Bearer ${userToken}` }
     });
