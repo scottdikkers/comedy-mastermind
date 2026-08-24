@@ -419,6 +419,8 @@ app.post('/chat', async (req, res) => {
         const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
         userId = payload.sub;
       }
+
+      console.log('Chat userId resolved:', userId);
       
       if (userId) {
         // Check if user can chat
