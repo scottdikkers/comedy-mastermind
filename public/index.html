@@ -1177,7 +1177,7 @@ async function loadConversations() {
     }
     listEl.innerHTML = convs.map(c => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1c1c1c;" id="conv-${c.id}">
-        <div style="flex:1;cursor:pointer;" onclick="loadConversation('${c.id}')">
+        <div style="flex:1;cursor:pointer;" onclick="closeScreen('screen-history');loadConversation('${c.id}')">
           <div id="conv-title-${c.id}" style="font-size:15px;color:#f0ece4;line-height:1.4;">${c.title || 'Untitled'}</div>
           <div style="font-size:12px;color:#555;margin-top:3px;">${new Date(c.updated_at).toLocaleDateString()}</div>
         </div>
@@ -1219,7 +1219,9 @@ async function startRename(convId) {
 async function loadConversation(convId) {
   if (!userToken) return;
   closeScreen('screen-history');
-  try {
+  const menuOverlay = document.getElementById('menu-overlay');
+  if (menuOverlay && menuOverlay.classList.contains('open')) toggleMenu();
+ try {
     const res = await fetch(`/conversations/${convId}/messages`, {
       headers: { 'Authorization': `Bearer ${userToken}` }
     });
@@ -1334,6 +1336,7 @@ function clickSuggestion(btn) {
 }
  
 function newConversation() {
+  currentConversationId = null;
   history = [];
   renderEmpty();
   const input = document.getElementById('input');
